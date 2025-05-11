@@ -91,5 +91,10 @@ void ShapeEllipse::rotate(double angle)
 
 std::unique_ptr<ShapeBase> ShapeEllipse::clone() const
 {
-    return std::make_unique<ShapeEllipse>(m_rect);
+    auto clone = std::make_unique<ShapeEllipse>(m_rect);
+    clone->setText(m_text);
+    clone->setRotation(m_rotation);
+    clone->setLineColor(m_lineColor);
+    clone->setLineWidth(m_lineWidth);
+    return clone;
 } 

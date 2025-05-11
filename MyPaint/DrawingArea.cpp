@@ -207,12 +207,6 @@ bool DrawingArea::exportToSVG(const QString &fileName)
     return true;
 }
 
-void DrawingArea::setBackgroundColor(const QColor &color)
-{
-    m_bgColor = color;
-    update();
-}
-
 void DrawingArea::setGridSize(int size)
 {
     m_gridSize = size;
@@ -751,4 +745,20 @@ void DrawingArea::moveShapeToBottom()
     shapes.insert(shapes.begin(), std::move(shape));
     selectedIndex = 0;
     update();
+}
+
+void DrawingArea::setSelectedShapeLineColor(const QColor &color)
+{
+    if (selectedIndex >= 0 && selectedIndex < shapes.size()) {
+        shapes[selectedIndex]->setLineColor(color);
+        update();
+    }
+}
+
+void DrawingArea::setSelectedShapeLineWidth(int width)
+{
+    if (selectedIndex >= 0 && selectedIndex < shapes.size()) {
+        shapes[selectedIndex]->setLineWidth(width);
+        update();
+    }
 }

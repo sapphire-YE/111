@@ -34,8 +34,10 @@
           <addaction name="actionOpen"/>
           <addaction name="actionSave"/>
           <addaction name="actionExport"/>
+          <addaction name="separator"/>
           <addaction name="actionUndo"/>
           <addaction name="actionRedo"/>
+          <addaction name="separator"/>
          </widget>
         </item>
        </layout>

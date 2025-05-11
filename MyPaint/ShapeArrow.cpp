@@ -13,8 +13,8 @@ void ShapeArrow::paintShape(QPainter* painter)
 {
     if (!painter) return;
 
-    // 设置黑色画笔
-    painter->setPen(QPen(Qt::black, 1));
+    // 设置画笔属性
+    painter->setPen(QPen(m_lineColor, m_lineWidth));
 
     // 绘制箭头线
     painter->drawLine(m_line);
@@ -172,5 +172,9 @@ void ShapeArrow::rotate(double angle)
 
 std::unique_ptr<ShapeBase> ShapeArrow::clone() const
 {
-    return std::make_unique<ShapeArrow>(m_line);
+    auto clone = std::make_unique<ShapeArrow>(m_line);
+    clone->setRotation(m_rotation);
+    clone->setLineColor(m_lineColor);
+    clone->setLineWidth(m_lineWidth);
+    return clone;
 } 

@@ -22,7 +22,8 @@ public:
     explicit DrawingArea(QWidget *parent = nullptr);
     ~DrawingArea();
 
-    void setBackgroundColor(const QColor &color);
+    void setBackgroundColor(const QColor &color) { m_bgColor = color; update(); }
+    QColor getBackgroundColor() const { return m_bgColor; }
     void setGridSize(int size);
     void setPageSize(const QSize &size);
     void setGridVisible(bool visible); // 设置网格显示/隐藏
@@ -41,6 +42,10 @@ public:
     void moveShapeDown();  // 下移一层
     void moveShapeToTop(); // 移到最顶层
     void moveShapeToBottom(); // 移到最底层
+
+    // 设置选中图形的线条颜色和粗细
+    void setSelectedShapeLineColor(const QColor &color);
+    void setSelectedShapeLineWidth(int width);
 
 protected:
     void paintEvent(QPaintEvent *event) override;

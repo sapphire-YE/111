@@ -5,6 +5,7 @@
 #include <vector>
 #include <QJsonObject>
 #include <memory>
+#include <QColor>
 
 class ShapeArrow; // 前置声明
 
@@ -96,7 +97,19 @@ public:
         {
             m_text = obj["text"].toString();
         }
+        if (obj.contains("lineColor")) {
+            m_lineColor = QColor(obj["lineColor"].toString());
+        }
+        if (obj.contains("lineWidth")) {
+            m_lineWidth = obj["lineWidth"].toInt();
+        }
     }
+
+    // 线条样式相关方法
+    virtual void setLineColor(const QColor &color) { m_lineColor = color; }
+    virtual QColor getLineColor() const { return m_lineColor; }
+    virtual void setLineWidth(int width) { m_lineWidth = width; }
+    virtual int getLineWidth() const { return m_lineWidth; }
 
 protected:
     // 计算新的矩形区域
@@ -106,6 +119,8 @@ protected:
     QString m_text;
     bool m_isEditing = false;
     double m_rotation = 0.0;  // 旋转角度（弧度）
+    QColor m_lineColor = Qt::black;  // 线条颜色
+    int m_lineWidth = 1;  // 线条粗细
 
 private:
     int m_selectedHandleIndex = -1; // 当前选中的锚点索引

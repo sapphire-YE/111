@@ -1,4 +1,4 @@
-﻿#include "mainwindow.h"
+#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "DrawingArea.h"
 #include "ShapeLibraryWidget.h"
@@ -8,12 +8,15 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QToolBar>
+#include <QSpinBox>
+#include <QLabel>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_drawingArea(nullptr), m_shapeLibrary(nullptr), m_currentFile("")
 {
     ui->setupUi(this);
     createMenus();
+    setupToolBar();
     setupConnections();
 
     // 创建绘图区
@@ -109,6 +112,48 @@ void MainWindow::createMenus()
     arrangeButton->setPopupMode(QToolButton::InstantPopup);
     arrangeButton->setMenu(startMenu);
     ui->startToolBar->addWidget(arrangeButton);
+}
+
+void MainWindow::setupToolBar()
+{
+    // 创建线条样式菜单
+    QMenu* lineStyleMenu = new QMenu(this);
+    
+    // 添加线条颜色选项
+    QAction* lineColorAction = lineStyleMenu->addAction("线条颜色");
+    connect(lineColorAction, &QAction::triggered, this, &MainWindow::onLineColorButtonClicked);
+    
+    // 添加分隔符
+    lineStyleMenu->addSeparator();
+    
+    // 添加线条粗细选项
+    QWidget* lineWidthWidget = new QWidget(this);
+    QHBoxLayout* lineWidthLayout = new QHBoxLayout(lineWidthWidget);
+    lineWidthLayout->setContentsMargins(12, 3, 12, 3);
+    
+    QLabel* lineWidthLabel = new QLabel("线条宽度:", lineWidthWidget);
+    lineWidthLayout->addWidget(lineWidthLabel);
+    
+    m_lineWidthSpinBox = new QSpinBox(lineWidthWidget);
+    m_lineWidthSpinBox->setRange(1, 10);
+    m_lineWidthSpinBox->setValue(1);
+    m_lineWidthSpinBox->setFixedWidth(50);
+    lineWidthLayout->addWidget(m_lineWidthSpinBox);
+    
+    QWidgetAction* widthAction = new QWidgetAction(this);
+    widthAction->setDefaultWidget(lineWidthWidget);
+    lineStyleMenu->addAction(widthAction);
+    
+    // 创建线条样式按钮
+    QToolButton* lineStyleButton = new QToolButton(this);
+    lineStyleButton->setText("线条样式");
+    lineStyleButton->setToolTip("设置选中图形的线条样式");
+    lineStyleButton->setPopupMode(QToolButton::InstantPopup);
+    lineStyleButton->setMenu(lineStyleMenu);
+    ui->startToolBar->addWidget(lineStyleButton);
+    
+    // 连接信号和槽
+    connect(m_lineWidthSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::onLineWidthChanged);
 }
 
 void MainWindow::setupConnections()
@@ -248,4 +293,24 @@ void MainWindow::onMoveToTop()
 void MainWindow::onMoveToBottom()
 {
     m_drawingArea->moveShapeToBottom();
+}
+
+// 实现线条样式相关的槽函数
+void MainWindow::onLineColorButtonClicked()
+{
+    ColorPopupWidget* popup = new ColorPopupWidget(this);
+    popup->setWindowFlags(Qt::Popup);
+    QPoint pos = QCursor::pos();
+    popup->move(pos);
+    connect(popup, &ColorPopupWidget::colorSelected, this, [this, popup](const QColor& color){
+        m_drawingArea->setSelectedShapeLineColor(color);
+        popup->close();
+        popup->deleteLater();
+    });
+    popup->show();
+}
+
+void MainWindow::onLineWidthChanged(int width)
+{
+    m_drawingArea->setSelectedShapeLineWidth(width);
 }

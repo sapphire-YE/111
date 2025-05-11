@@ -33,6 +33,8 @@ public:
         obj["x2"] = m_line.x2();
         obj["y2"] = m_line.y2();
         obj["rotation"] = m_rotation;  // 保存旋转角度
+        obj["lineColor"] = m_lineColor.name();  // 保存线条颜色
+        obj["lineWidth"] = m_lineWidth;  // 保存线条粗细
         return obj;
     }
 
@@ -43,6 +45,12 @@ public:
         m_line.setPoints(p1, p2);
         if (obj.contains("rotation")) {
             m_rotation = obj["rotation"].toDouble();
+        }
+        if (obj.contains("lineColor")) {
+            m_lineColor = QColor(obj["lineColor"].toString());
+        }
+        if (obj.contains("lineWidth")) {
+            m_lineWidth = obj["lineWidth"].toInt();
         }
     }
 
