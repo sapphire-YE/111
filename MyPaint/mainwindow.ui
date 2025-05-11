@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>872</width>
+    <height>432</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Flow Chart Drawing Software</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
+    <item>
+     <widget class="QTabWidget" name="ribbonTabWidget">
+      <property name="tabPosition">
+       <enum>QTabWidget::TabPosition::North</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tabStart">
+       <attribute name="title">
+        <string>Start</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayoutStart">
+        <item>
+         <widget class="QToolBar" name="startToolBar">
+          <addaction name="actionNew"/>
+          <addaction name="actionOpen"/>
+          <addaction name="actionSave"/>
+          <addaction name="actionUndo"/>
+          <addaction name="actionRedo"/>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabArrange">
+       <attribute name="title">
+        <string>Arrange</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayoutArrange">
+        <item>
+         <widget class="QToolBar" name="arrangeToolBar">
+          <addaction name="actionAlignLeft"/>
+          <addaction name="actionAlignCenter"/>
+          <addaction name="actionAlignRight"/>
+          <addaction name="actionAlignTop"/>
+          <addaction name="actionAlignBottom"/>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabPage">
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayoutPage">
+        <item>
+         <widget class="QToolButton" name="toolButtonBackgroundColor">
+          <property name="text">
+           <string>Background Color</string>
+          </property>
+          <property name="popupMode">
+           <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="toolButtonPageSize">
+          <property name="text">
+           <string>Page Size</string>
+          </property>
+          <property name="popupMode">
+           <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+          </property>
+          <addaction name="actionA3"/>
+          <addaction name="actionA4"/>
+          <addaction name="actionA5"/>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="toolButtonGridSize">
+          <property name="text">
+           <string>Grid Size</string>
+          </property>
+          <property name="popupMode">
+           <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+          </property>
+          <addaction name="actionGridSmall"/>
+          <addaction name="actionGridMedium"/>
+          <addaction name="actionGridLarge"/>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="drawingArea" native="true">
+      <layout class="QVBoxLayout" name="verticalLayoutDrawingArea"/>
+      <property name="styleSheet">
+       <string notr="true">
+QWidget#drawingArea {
+  background-color: white;
+}
+       </string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QDockWidget" name="shapeLibraryDock">
+   <property name="windowTitle">
+    <string>Shape Library</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayoutDock">
+     <item>
+      <widget class="QListWidget" name="shapeListWidget"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="propertyDock">
+   <property name="windowTitle">
+    <string>Properties</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayoutDock2">
+     <item>
+      <widget class="QLabel" name="propertyLabel">
+       <property name="text">
+        <string>Property Panel</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="actionAlignLeft">
+   <property name="text">
+    <string>Align Left</string>
+   </property>
+  </action>
+  <action name="actionAlignCenter">
+   <property name="text">
+    <string>Align Center</string>
+   </property>
+  </action>
+  <action name="actionAlignRight">
+   <property name="text">
+    <string>Align Right</string>
+   </property>
+  </action>
+  <action name="actionAlignTop">
+   <property name="text">
+    <string>Align Top</string>
+   </property>
+  </action>
+  <action name="actionAlignBottom">
+   <property name="text">
+    <string>Align Bottom</string>
+   </property>
+  </action>
+  <action name="actionA3">
+   <property name="text">
+    <string>A3 Size (1500px*2100px)</string>
+   </property>
+  </action>
+  <action name="actionA4">
+   <property name="text">
+    <string>A4 Size (1050px*1500px)</string>
+   </property>
+  </action>
+  <action name="actionA5">
+   <property name="text">
+    <string>A5 Size (750px*1050px)</string>
+   </property>
+  </action>
+  <action name="actionGridSmall">
+   <property name="text">
+    <string>Small Grid</string>
+   </property>
+  </action>
+  <action name="actionGridMedium">
+   <property name="text">
+    <string>Medium Grid</string>
+   </property>
+  </action>
+  <action name="actionGridLarge">
+   <property name="text">
+    <string>Large Grid</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="9"/>
+ <resources/>
+ <connections/>
+</ui>
