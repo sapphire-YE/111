@@ -6,7 +6,8 @@ get_filename_component(CURRENT_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
 get_filename_component(CURRENT_DIR_NAME "${CURRENT_DIR_PATH}" NAME) 
 project(${CURRENT_DIR_NAME})
 
-set(CMAKE_CXX_STANDARD 11) 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
 	add_compile_options(/Zc:__cplusplus)
@@ -18,7 +19,7 @@ SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTORCC ON)
 SET(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Core Widgets Gui LinguistTools REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets Gui LinguistTools Svg REQUIRED)
 
 file(GLOB UI_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.ui")
 file(GLOB RCC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*qrc")
@@ -41,6 +42,7 @@ target_link_libraries(${PROJECT_NAME}
 	Qt5::Widgets
 	Qt5::Core
 	Qt5::Gui
+	Qt5::Svg
 )
 
 add_custom_target(translations DEPENDS ${QM_FILES})

@@ -4,18 +4,20 @@
 #include "ShapeLibraryWidget.h"
 #include "ColorPopupWidget.h"
 #include <QScrollArea>
+#include <QMenuBar>
+#include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-    , m_drawingArea(nullptr)
-    , m_shapeLibrary(nullptr)
+    : QMainWindow(parent), ui(new Ui::MainWindow), m_drawingArea(nullptr), m_shapeLibrary(nullptr), m_currentFile("")
 {
     ui->setupUi(this);
+    createMenus();
+    setupConnections();
 
     // 创建绘图区
     m_drawingArea = new DrawingArea(nullptr);
-    QScrollArea* scrollArea = new QScrollArea(ui->drawingArea);
+    QScrollArea *scrollArea = new QScrollArea(ui->drawingArea);
     scrollArea->setWidget(m_drawingArea);
     scrollArea->setWidgetResizable(true);
     ui->verticalLayoutDrawingArea->addWidget(scrollArea);
@@ -23,14 +25,16 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建图形库
     m_shapeLibrary = new ShapeLibraryWidget(this);
     // 替换原有的shapeListWidget
-    QLayout* dockLayout = ui->dockWidgetContents->layout();
-    if (QWidget* oldWidget = ui->shapeListWidget) {
+    QLayout *dockLayout = ui->dockWidgetContents->layout();
+    if (QWidget *oldWidget = ui->shapeListWidget)
+    {
         dockLayout->removeWidget(oldWidget);
         delete oldWidget;
     }
     dockLayout->addWidget(m_shapeLibrary);
 
-    connect(ui->toolButtonBackgroundColor, &QToolButton::clicked, this, [this](){
+    connect(ui->toolButtonBackgroundColor, &QToolButton::clicked, this, [this]()
+            {
         ColorPopupWidget* popup = new ColorPopupWidget(this);
         popup->setWindowFlags(Qt::Popup);
         QPoint pos = ui->toolButtonBackgroundColor->mapToGlobal(QPoint(0, ui->toolButtonBackgroundColor->height()));
@@ -40,30 +44,23 @@ MainWindow::MainWindow(QWidget *parent)
             popup->close();
             popup->deleteLater();
         });
-        popup->show();
-    });
+        popup->show(); });
 
     // 连接网格大小按钮
-    connect(ui->actionGridSmall, &QAction::triggered, this, [this](){
-        m_drawingArea->setGridSize(10);
-    });
-    connect(ui->actionGridMedium, &QAction::triggered, this, [this](){
-        m_drawingArea->setGridSize(20);
-    });
-    connect(ui->actionGridLarge, &QAction::triggered, this, [this](){
-        m_drawingArea->setGridSize(40);
-    });
+    connect(ui->actionGridSmall, &QAction::triggered, this, [this]()
+            { m_drawingArea->setGridSize(10); });
+    connect(ui->actionGridMedium, &QAction::triggered, this, [this]()
+            { m_drawingArea->setGridSize(20); });
+    connect(ui->actionGridLarge, &QAction::triggered, this, [this]()
+            { m_drawingArea->setGridSize(40); });
 
     // 连接页面大小按钮
-    connect(ui->actionA3, &QAction::triggered, this, [this](){
-        m_drawingArea->setPageSize(QSize(1500, 2100));
-    });
-    connect(ui->actionA4, &QAction::triggered, this, [this](){
-        m_drawingArea->setPageSize(QSize(1050, 1500));
-    });
-    connect(ui->actionA5, &QAction::triggered, this, [this](){
-        m_drawingArea->setPageSize(QSize(750, 1050));
-    });
+    connect(ui->actionA3, &QAction::triggered, this, [this]()
+            { m_drawingArea->setPageSize(QSize(1500, 2100)); });
+    connect(ui->actionA4, &QAction::triggered, this, [this]()
+            { m_drawingArea->setPageSize(QSize(1050, 1500)); });
+    connect(ui->actionA5, &QAction::triggered, this, [this]()
+            { m_drawingArea->setPageSize(QSize(750, 1050)); });
 }
 
 MainWindow::~MainWindow()
@@ -71,3 +68,127 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::createMenus()
+{
+    // 创建文件菜单
+    QMenu *fileMenu = menuBar()->addMenu(tr("文件(&F)"));
+
+    QAction *newAction = fileMenu->addAction(tr("新建(&N)"), this, &MainWindow::onNewFile);
+    newAction->setShortcut(QKeySequence::New);
+
+    QAction *openAction = fileMenu->addAction(tr("打开(&O)"), this, &MainWindow::onOpenFile);
+    openAction->setShortcut(QKeySequence::Open);
+
+    QAction *saveAction = fileMenu->addAction(tr("保存(&S)"), this, &MainWindow::onSaveFile);
+    saveAction->setShortcut(QKeySequence::Save);
+
+    QAction *saveAsAction = fileMenu->addAction(tr("另存为(&A)"), this, &MainWindow::onSaveAs);
+    saveAsAction->setShortcut(QKeySequence::SaveAs);
+
+    fileMenu->addSeparator();
+
+    // 创建导出菜单
+    QMenu *exportMenu = fileMenu->addMenu(tr("导出"));
+    exportMenu->addAction(tr("导出为PNG"), this, &MainWindow::onExportPNG);
+    exportMenu->addAction(tr("导出为SVG"), this, &MainWindow::onExportSVG);
+}
+
+void MainWindow::setupConnections()
+{
+    // 其他连接保持不变
+}
+
+void MainWindow::onNewFile()
+{
+    if (m_drawingArea)
+    {
+        m_drawingArea->clear();
+        m_currentFile.clear();
+        setWindowTitle(tr("未命名 - 流程图"));
+    }
+}
+
+void MainWindow::onOpenFile()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("打开流程图"), "",
+                                                    tr("流程图文件 (*.flow);;所有文件 (*)"));
+
+    if (!fileName.isEmpty())
+    {
+        if (m_drawingArea && m_drawingArea->loadFromFile(fileName))
+        {
+            m_currentFile = fileName;
+            setWindowTitle(QFileInfo(fileName).fileName() + tr(" - 流程图"));
+        }
+        else
+        {
+            QMessageBox::warning(this, tr("错误"), tr("无法打开文件"));
+        }
+    }
+}
+
+void MainWindow::onSaveFile()
+{
+    if (m_currentFile.isEmpty())
+    {
+        onSaveAs();
+    }
+    else
+    {
+        if (m_drawingArea && !m_drawingArea->saveToFile(m_currentFile))
+        {
+            QMessageBox::warning(this, tr("错误"), tr("保存文件失败"));
+        }
+    }
+}
+
+void MainWindow::onSaveAs()
+{
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    tr("保存流程图"), "",
+                                                    tr("流程图文件 (*.flow);;所有文件 (*)"));
+
+    if (!fileName.isEmpty())
+    {
+        if (m_drawingArea && m_drawingArea->saveToFile(fileName))
+        {
+            m_currentFile = fileName;
+            setWindowTitle(QFileInfo(fileName).fileName() + tr(" - 流程图"));
+        }
+        else
+        {
+            QMessageBox::warning(this, tr("错误"), tr("保存文件失败"));
+        }
+    }
+}
+
+void MainWindow::onExportPNG()
+{
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    tr("导出PNG"), "",
+                                                    tr("PNG图片 (*.png)"));
+
+    if (!fileName.isEmpty() && m_drawingArea)
+    {
+        if (!m_drawingArea->exportToPNG(fileName))
+        {
+            QMessageBox::warning(this, tr("错误"), tr("导出PNG失败"));
+        }
+    }
+}
+
+void MainWindow::onExportSVG()
+{
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    tr("导出SVG"), "",
+                                                    tr("SVG文件 (*.svg)"));
+
+    if (!fileName.isEmpty() && m_drawingArea)
+    {
+        if (!m_drawingArea->exportToSVG(fileName))
+        {
+            QMessageBox::warning(this, tr("错误"), tr("导出SVG失败"));
+        }
+    }
+}

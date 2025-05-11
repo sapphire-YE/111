@@ -2,9 +2,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-//。h
+// 。h
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+namespace Ui
+{
+    class MainWindow;
+}
 QT_END_NAMESPACE
 
 class DrawingArea;
@@ -18,10 +21,22 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void onNewFile();
+    void onOpenFile();
+    void onSaveFile();
+    void onSaveAs();
+    void onExportPNG();
+    void onExportSVG();
+
 private:
+    void createMenus();
+    void setupConnections();
+
     Ui::MainWindow *ui;
-    DrawingArea* m_drawingArea;
-    ShapeLibraryWidget* m_shapeLibrary;
+    DrawingArea *m_drawingArea;
+    ShapeLibraryWidget *m_shapeLibrary;
+    QString m_currentFile; // 当前打开的文件路径
 };
 
 #endif // MAINWINDOW_H
