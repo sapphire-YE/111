@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.10)  #cmake版本需要3.10
+cmake_minimum_required(VERSION 3.10)  #cmake 版本需要 3.10
 
-# 获取当前CMake文件所在的目录的绝对路径 
-get_filename_component(CURRENT_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE) 
-# 从路径中获取目录名 
-get_filename_component(CURRENT_DIR_NAME "${CURRENT_DIR_PATH}" NAME) 
+# 获取当前 CMake 文件所在的目录的绝对路径
+get_filename_component(CURRENT_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
+# 从路径中获取目录名
+get_filename_component(CURRENT_DIR_NAME "${CURRENT_DIR_PATH}" NAME)
 project(${CURRENT_DIR_NAME})
 
 set(CMAKE_CXX_STANDARD 14)
@@ -33,7 +33,7 @@ source_group("Resource Files" FILES ${RCC_FILES})
 
 add_executable(${PROJECT_NAME} WIN32 ${HEADER_FILES} ${CPP_FILES} ${UI_FILES} ${RCC_FILES})
 
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
 	Qt5::Widgets
 	Qt5::Core
 	Qt5::Gui

@@ -1,5 +1,8 @@
+# Binaries for programs
 .DS_Store
 
-MyPaint/build/
+# Build output
+build/
 
+# Visual Studio Code
 .vscode/

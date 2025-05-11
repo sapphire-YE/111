@@ -1,754 +1,658 @@
 ﻿#include "DrawingArea.h"
+#include "ShapeFactory.h"
+#include <QDataStream>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QKeyEvent>
+#include <QLineEdit>
+#include <QMenu>
+#include <QMimeData>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPen>
-#include <QMouseEvent>
-#include <QKeyEvent>
-#include <QMimeData>
-#include "ShapeFactory.h"
-#include <algorithm>
-#include <QLineEdit>
-#include <QFile>
-#include <QDataStream>
 #include <QSvgGenerator>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QMenu>
+#include <algorithm>
 
-DrawingArea::DrawingArea(QWidget *parent)
-    : QWidget(parent)
-{
-    setObjectName("drawingArea");
-    setFocusPolicy(Qt::StrongFocus); // 允许接收键盘事件
-    setAcceptDrops(true);            // 允许接收拖拽
-    setMouseTracking(true);
-    createContextMenu(); // 创建右键菜单
+DrawingArea::DrawingArea(QWidget *parent) : QWidget(parent) {
+  setObjectName("drawingArea");
+  setFocusPolicy(Qt::StrongFocus); // 允许接收键盘事件
+  setAcceptDrops(true);            // 允许接收拖拽
+  setMouseTracking(true);
+  createContextMenu(); // 创建右键菜单
 }
 
-DrawingArea::~DrawingArea()
-{
-    // 清理资源
-    if (m_textEdit) {
-        delete m_textEdit;
-        m_textEdit = nullptr;
-    }
-    if (m_contextMenu) {
-        delete m_contextMenu;
-        m_contextMenu = nullptr;
-    }
-}
-
-bool DrawingArea::saveToFile(const QString &fileName)
-{
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly))
-    {
-        return false;
-    }
-
-    QJsonArray shapesArray;
-    for (const auto &shape : shapes)
-    {
-        QJsonObject shapeObj = shape->toJson();
-        shapesArray.append(shapeObj);
-    }
-
-    QJsonObject rootObj;
-    rootObj["shapes"] = shapesArray;
-    rootObj["backgroundColor"] = m_bgColor.name();
-    rootObj["gridSize"] = m_gridSize;
-    rootObj["size"] = QJsonObject{
-        {"width", width()},
-        {"height", height()}};
-
-    // 保存箭头连接信息
-    QJsonArray connectionsArray;
-    for (const auto &conn : arrowConnections)
-    {
-        QJsonObject connObj;
-        connObj["arrowIndex"] = conn.arrowIndex;
-        connObj["shapeIndex"] = conn.shapeIndex;
-        connObj["handleIndex"] = conn.handleIndex;
-        connObj["isStartPoint"] = conn.isStartPoint;
-        connectionsArray.append(connObj);
-    }
-    rootObj["connections"] = connectionsArray;
-
-    QJsonDocument doc(rootObj);
-    file.write(doc.toJson());
-    return true;
-}
-
-bool DrawingArea::loadFromFile(const QString &fileName)
-{
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly))
-    {
-        return false;
-    }
-
-    QByteArray data = file.readAll();
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-    if (doc.isNull())
-    {
-        return false;
-    }
-
-    QJsonObject rootObj = doc.object();
-
-    // 清空当前画布
-    clear();
-
-    // 恢复背景色和网格大小
-    m_bgColor = QColor(rootObj["backgroundColor"].toString());
-    m_gridSize = rootObj["gridSize"].toInt();
-
-    // 恢复画布大小
-    QJsonObject sizeObj = rootObj["size"].toObject();
-    setPageSize(QSize(sizeObj["width"].toInt(), sizeObj["height"].toInt()));
-
-    // 恢复所有图形
-    QJsonArray shapesArray = rootObj["shapes"].toArray();
-    for (const QJsonValue &shapeVal : shapesArray)
-    {
-        QJsonObject shapeObj = shapeVal.toObject();
-        QString type = shapeObj["type"].toString();
-
-        std::unique_ptr<ShapeBase> shape;
-        if (type == "rect")
-        {
-            shape = ShapeFactory::createRect(QRect());
-        }
-        else if (type == "ellipse")
-        {
-            shape = ShapeFactory::createEllipse(QRect());
-        }
-        else if (type == "arrow")
-        {
-            shape = ShapeFactory::createArrow(QLine());
-        }
-
-        if (shape)
-        {
-            shape->fromJson(shapeObj);
-            shapes.push_back(std::move(shape));
-        }
-    }
-
-    // 恢复箭头连接
-    QJsonArray connectionsArray = rootObj["connections"].toArray();
-    for (const QJsonValue &connVal : connectionsArray)
-    {
-        QJsonObject connObj = connVal.toObject();
-        ArrowConnection conn;
-        conn.arrowIndex = connObj["arrowIndex"].toInt();
-        conn.shapeIndex = connObj["shapeIndex"].toInt();
-        conn.handleIndex = connObj["handleIndex"].toInt();
-        conn.isStartPoint = connObj["isStartPoint"].toBool();
-        arrowConnections.push_back(conn);
-    }
-
-    update();
-    return true;
-}
-
-void DrawingArea::clear()
-{
-    shapes.clear();
-    arrowConnections.clear();
-    selectedIndex = -1;
-    snappedHandle = SnapInfo();
-    update();
-}
-
-bool DrawingArea::exportToPNG(const QString &fileName)
-{
-    QImage image(size(), QImage::Format_ARGB32);
-    image.fill(Qt::transparent);
-
-    QPainter painter(&image);
-    painter.setRenderHint(QPainter::Antialiasing);
-
-    // 绘制背景
-    painter.fillRect(rect(), m_bgColor);
-
-    // 绘制所有图形
-    for (const auto &shape : shapes)
-    {
-        shape->paint(&painter, false); // 不显示控制点
-    }
-
-    return image.save(fileName, "PNG");
-}
-
-bool DrawingArea::exportToSVG(const QString &fileName)
-{
-    QSvgGenerator generator;
-    generator.setFileName(fileName);
-    generator.setSize(size());
-    generator.setViewBox(rect());
-    generator.setTitle("Flow Chart");
-    generator.setDescription("Generated by Flow Chart Editor");
-
-    QPainter painter;
-    painter.begin(&generator);
-    painter.setRenderHint(QPainter::Antialiasing);
-
-    // 绘制背景
-    painter.fillRect(rect(), m_bgColor);
-
-    // 绘制所有图形
-    for (const auto &shape : shapes)
-    {
-        shape->paint(&painter, false); // 不显示控制点
-    }
-
-    painter.end();
-    return true;
-}
-
-void DrawingArea::setBackgroundColor(const QColor &color)
-{
-    m_bgColor = color;
-    update();
-}
-
-void DrawingArea::setGridSize(int size)
-{
-    m_gridSize = size;
-    update();
-}
-
-void DrawingArea::setGridVisible(bool visible)
-{
-    m_gridVisible = visible;
-    update();
-}
-
-void DrawingArea::setPageSize(const QSize &size)
-{
-    setFixedSize(size);
-}
-
-void DrawingArea::paintEvent(QPaintEvent *event)
-{
-    QPainter painter(this);
-    painter.fillRect(rect(), m_bgColor); // 先填充背景色
-
-    painter.setRenderHint(QPainter::Antialiasing); // 抗锯齿
-
-    // 画网格
-    if (m_gridVisible) {  // 只在网格可见时绘制
-        int gridSize = m_gridSize;               // 网格间距
-        int majorGridStep = 5;                   // 每5格一条粗线
-        QPen thinPen(QColor(200, 200, 200), 1);  // 细线浅灰色
-        QPen thickPen(QColor(120, 120, 120), 2); // 粗线深灰色
-        // 竖线
-        for (int x = 0, idx = 0; x < width(); x += gridSize, ++idx)
-        {
-            if (idx % majorGridStep == 0)
-            {
-                painter.setPen(thickPen);
-            }
-            else
-            {
-                painter.setPen(thinPen);
-            }
-            painter.drawLine(x, 0, x, height());
-        }
-        // 横线
-        for (int y = 0, idx = 0; y < height(); y += gridSize, ++idx)
-        {
-            if (idx % majorGridStep == 0)
-            {
-                painter.setPen(thickPen);
-            }
-            else
-            {
-                painter.setPen(thinPen);
-            }
-            painter.drawLine(0, y, width(), y);
-        }
-    }
-
-    // 画图形
-    for (int i = 0; i < shapes.size(); ++i)
-    {
-        bool showHandles = false;
-        if (i == snappedHandle.shapeIndex)
-            showHandles = true;
-        if (i == selectedIndex)
-        {
-            auto *arrow = dynamic_cast<ShapeArrow *>(shapes[i].get());
-            if (arrow && shapes[i]->isHandleSelected())
-                showHandles = false;
-            else
-                showHandles = true;
-        }
-        shapes[i]->paint(&painter, showHandles);
-    }
-
-    QWidget::paintEvent(event); // 调用父类paintEvent
-}
-
-void DrawingArea::mousePressEvent(QMouseEvent *event)
-{
-    if (selectedIndex != -1)
-    {
-        // 检查是否点击了锚点
-        const auto &handles = shapes[selectedIndex]->getHandles();
-        for (size_t i = 0; i < handles.size(); ++i)
-        {
-            if (handles[i].rect.contains(event->pos()))
-            {
-                shapes[selectedIndex]->setSelectedHandleIndex(i);
-                lastMousePos = event->pos();
-                dragging = true;
-                update();
-                return;
-            }
-        }
-    }
-
-    selectedIndex = -1;
-    for (int i = shapes.size() - 1; i >= 0; --i)
-    {
-        if (shapes[i]->boundingRect().contains(event->pos()))
-        {
-            selectedIndex = i;
-            lastMousePos = event->pos();
-            dragging = true;
-            update();
-            return;
-        }
-    }
-    update();
-}
-
-void DrawingArea::mouseMoveEvent(QMouseEvent *event)
-{
-    if (dragging && selectedIndex != -1)
-    {
-        if (shapes[selectedIndex]->isHandleSelected())
-        {
-            if (auto *arrow = dynamic_cast<ShapeArrow *>(shapes[selectedIndex].get()))
-            {
-                int handleIndex = arrow->getSelectedHandleIndex();
-                if (handleIndex != -1)
-                {
-                    QPoint mousePos = event->pos();
-                    QPoint otherPos = (handleIndex == 0) ? arrow->getLine().p2() : arrow->getLine().p1();
-                    const int snapDistance = 10;
-                    bool foundSnap = false;
-                    QPoint snapTarget;
-
-                    // 检查所有图形的锚点
-                    for (size_t i = 0; i < shapes.size(); ++i)
-                    {
-                        if (i == selectedIndex)
-                            continue;
-                        if (dynamic_cast<ShapeArrow *>(shapes[i].get()))
-                            continue;
-                        const auto &arrowAnchors = shapes[i]->getArrowAnchors();
-                        for (size_t j = 0; j < arrowAnchors.size(); ++j)
-                        {
-                            if (arrowAnchors[j].type != ShapeBase::Handle::ArrowAnchor)
-                                continue;
-                            QPoint target = arrowAnchors[j].rect.center();
-                            if (target == otherPos)
-                                continue;
-                            if ((mousePos - target).manhattanLength() <= snapDistance)
-                            {
-                                snapTarget = target;
-                                snappedHandle = {static_cast<int>(i), static_cast<int>(j), target};
-                                foundSnap = true;
-                                break;
-                            }
-                        }
-                        if (foundSnap)
-                            break;
-                    }
-                    if (foundSnap)
-                    {
-                        // 只锁定端点，不再跟随鼠标
-                        if (handleIndex == 0)
-                            arrow->setP1(snapTarget);
-                        else
-                            arrow->setP2(snapTarget);
-                    }
-                    else
-                    {
-                        // 没有吸附，端点跟随鼠标
-                        if (handleIndex == 0)
-                            arrow->setP1(mousePos);
-                        else
-                            arrow->setP2(mousePos);
-                        snappedHandle = {-1, -1, QPoint()};
-                    }
-                    update();
-                }
-            }
-            else
-            {
-                // 处理非箭头图形的缩放
-                QPoint delta = event->pos() - lastMousePos;
-                shapes[selectedIndex]->handleAnchorInteraction(event->pos(), lastMousePos);
-                updateConnectedArrows(selectedIndex, delta);
-                lastMousePos = event->pos();
-                update();
-            }
-        }
-        else
-        {
-            // 图形整体拖动
-            QPoint delta = event->pos() - lastMousePos;
-            shapes[selectedIndex]->moveBy(delta);
-            updateConnectedArrows(selectedIndex, delta);
-            lastMousePos = event->pos();
-            update();
-        }
-    }
-}
-
-void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
-{
-    if (selectedIndex != -1)
-    {
-        if (auto *arrow = dynamic_cast<ShapeArrow *>(shapes[selectedIndex].get()))
-        {
-            // 如果箭头正在连接到一个图形
-            if (snappedHandle.shapeIndex != -1)
-            {
-                // 记录连接关系
-                ArrowConnection connection;
-                connection.arrowIndex = selectedIndex;
-                connection.shapeIndex = snappedHandle.shapeIndex;
-                connection.handleIndex = snappedHandle.handleIndex;
-                connection.isStartPoint = (arrow->getSelectedHandleIndex() == 0);
-                arrowConnections.push_back(connection);
-            }
-        }
-        shapes[selectedIndex]->clearHandleSelection();
-    }
-    snappedHandle = {-1, -1, QPoint()};
-    dragging = false;
-}
-
-void DrawingArea::mouseDoubleClickEvent(QMouseEvent *event)
-{
-    // 查找点击的图形
-    for (int i = shapes.size() - 1; i >= 0; --i)
-    {
-        if (shapes[i]->contains(event->pos()))
-        {
-            // 检查图形是否支持文本编辑
-            if (shapes[i]->isTextEditable())
-            {
-                startTextEditing(i);
-                return;
-            }
-        }
-    }
-}
-
-void DrawingArea::startTextEditing(int shapeIndex)
-{
-    // 如果已经在编辑其他图形，先完成编辑
-    if (m_textEdit)
-    {
-        finishTextEditing();
-    }
-
-    // 根据图形类型创建不同的文本编辑控件
-    if (dynamic_cast<ShapeEllipse *>(shapes[shapeIndex].get()))
-    {
-        m_textEdit = new EllipseTextEdit(this);
-    }
-    else
-    {
-        m_textEdit = new QLineEdit(this);
-    }
-
-    // 设置文本编辑控件的基本属性
-    m_textEdit->setGeometry(shapes[shapeIndex]->boundingRect().adjusted(5, 5, -5, -5));
-    if (auto *lineEdit = qobject_cast<QLineEdit *>(m_textEdit))
-    {
-        lineEdit->setText(shapes[shapeIndex]->getText());
-        lineEdit->setAlignment(Qt::AlignCenter);
-        lineEdit->show();
-        lineEdit->setFocus();
-
-        // 连接编辑完成的信号
-        connect(lineEdit, &QLineEdit::editingFinished, this, &DrawingArea::finishTextEditing);
-        connect(lineEdit, &QLineEdit::returnPressed, this, &DrawingArea::finishTextEditing);
-    }
-
-    // 设置图形为编辑状态
-    shapes[shapeIndex]->setEditing(true);
-    selectedIndex = shapeIndex;
-}
-
-void DrawingArea::finishTextEditing()
-{
-    if (!m_textEdit || selectedIndex == -1)
-        return;
-
-    // 获取编辑后的文本
-    QString newText;
-    if (auto *lineEdit = qobject_cast<QLineEdit *>(m_textEdit))
-    {
-        newText = lineEdit->text();
-    }
-    shapes[selectedIndex]->setText(newText);
-    shapes[selectedIndex]->setEditing(false);
-
-    // 清理编辑控件
-    m_textEdit->deleteLater();
+DrawingArea::~DrawingArea() {
+  // 清理资源
+  if (m_textEdit) {
+    delete m_textEdit;
     m_textEdit = nullptr;
-
-    // 更新显示
-    update();
+  }
+  if (m_contextMenu) {
+    delete m_contextMenu;
+    m_contextMenu = nullptr;
+  }
 }
 
-void DrawingArea::keyPressEvent(QKeyEvent *event)
-{
-    if (m_textEdit && m_textEdit->hasFocus())
-    {
-        // 如果正在编辑文本，让文本编辑控件处理键盘事件
-        QWidget::keyPressEvent(event);
-        return;
+bool DrawingArea::saveToFile(const QString &fileName) {
+  QFile file(fileName);
+  if (!file.open(QIODevice::WriteOnly)) {
+    return false;
+  }
+
+  QJsonArray shapesArray;
+  for (const auto &shape : shapes) {
+    QJsonObject shapeObj = shape->toJson();
+    shapesArray.append(shapeObj);
+  }
+
+  QJsonObject rootObj;
+  rootObj["shapes"] = shapesArray;
+  rootObj["backgroundColor"] = m_bgColor.name();
+  rootObj["gridSize"] = m_gridSize;
+  rootObj["size"] = QJsonObject{{"width", width()}, {"height", height()}};
+
+  // 保存箭头连接信息
+  QJsonArray connectionsArray;
+  for (const auto &conn : arrowConnections) {
+    QJsonObject connObj;
+    connObj["arrowIndex"] = conn.arrowIndex;
+    connObj["shapeIndex"] = conn.shapeIndex;
+    connObj["handleIndex"] = conn.handleIndex;
+    connObj["isStartPoint"] = conn.isStartPoint;
+    connectionsArray.append(connObj);
+  }
+  rootObj["connections"] = connectionsArray;
+
+  QJsonDocument doc(rootObj);
+  file.write(doc.toJson());
+  return true;
+}
+
+bool DrawingArea::loadFromFile(const QString &fileName) {
+  QFile file(fileName);
+  if (!file.open(QIODevice::ReadOnly)) {
+    return false;
+  }
+
+  QByteArray data = file.readAll();
+  QJsonDocument doc = QJsonDocument::fromJson(data);
+  if (doc.isNull()) {
+    return false;
+  }
+
+  QJsonObject rootObj = doc.object();
+
+  // 清空当前画布
+  clear();
+
+  // 恢复背景色和网格大小
+  m_bgColor = QColor(rootObj["backgroundColor"].toString());
+  m_gridSize = rootObj["gridSize"].toInt();
+
+  // 恢复画布大小
+  QJsonObject sizeObj = rootObj["size"].toObject();
+  setPageSize(QSize(sizeObj["width"].toInt(), sizeObj["height"].toInt()));
+
+  // 恢复所有图形
+  QJsonArray shapesArray = rootObj["shapes"].toArray();
+  for (const QJsonValue &shapeVal : shapesArray) {
+    QJsonObject shapeObj = shapeVal.toObject();
+    QString type = shapeObj["type"].toString();
+
+    std::unique_ptr<ShapeBase> shape;
+    if (type == "rect") {
+      shape = ShapeFactory::createRect(QRect());
+    } else if (type == "ellipse") {
+      shape = ShapeFactory::createEllipse(QRect());
+    } else if (type == "arrow") {
+      shape = ShapeFactory::createArrow(QLine());
     }
 
-    if (selectedIndex != -1 && (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace))
-    {
-        // 删除相关的箭头连接
-        arrowConnections.erase(
-            std::remove_if(arrowConnections.begin(), arrowConnections.end(),
-                           [this](const ArrowConnection &conn)
-                           {
-                               return conn.shapeIndex == selectedIndex || conn.arrowIndex == selectedIndex;
-                           }),
-            arrowConnections.end());
+    if (shape) {
+      shape->fromJson(shapeObj);
+      shapes.push_back(std::move(shape));
+    }
+  }
 
-        shapes.erase(shapes.begin() + selectedIndex);
-        selectedIndex = -1;
+  // 恢复箭头连接
+  QJsonArray connectionsArray = rootObj["connections"].toArray();
+  for (const QJsonValue &connVal : connectionsArray) {
+    QJsonObject connObj = connVal.toObject();
+    ArrowConnection conn;
+    conn.arrowIndex = connObj["arrowIndex"].toInt();
+    conn.shapeIndex = connObj["shapeIndex"].toInt();
+    conn.handleIndex = connObj["handleIndex"].toInt();
+    conn.isStartPoint = connObj["isStartPoint"].toBool();
+    arrowConnections.push_back(conn);
+  }
+
+  update();
+  return true;
+}
+
+void DrawingArea::clear() {
+  shapes.clear();
+  arrowConnections.clear();
+  selectedIndex = -1;
+  snappedHandle = SnapInfo();
+  update();
+}
+
+bool DrawingArea::exportToPNG(const QString &fileName) {
+  QImage image(size(), QImage::Format_ARGB32);
+  image.fill(Qt::transparent);
+
+  QPainter painter(&image);
+  painter.setRenderHint(QPainter::Antialiasing);
+
+  // 绘制背景
+  painter.fillRect(rect(), m_bgColor);
+
+  // 绘制所有图形
+  for (const auto &shape : shapes) {
+    shape->paint(&painter, false); // 不显示控制点
+  }
+
+  return image.save(fileName, "PNG");
+}
+
+bool DrawingArea::exportToSVG(const QString &fileName) {
+  QSvgGenerator generator;
+  generator.setFileName(fileName);
+  generator.setSize(size());
+  generator.setViewBox(rect());
+  generator.setTitle("Flow Chart");
+  generator.setDescription("Generated by Flow Chart Editor");
+
+  QPainter painter;
+  painter.begin(&generator);
+  painter.setRenderHint(QPainter::Antialiasing);
+
+  // 绘制背景
+  painter.fillRect(rect(), m_bgColor);
+
+  // 绘制所有图形
+  for (const auto &shape : shapes) {
+    shape->paint(&painter, false); // 不显示控制点
+  }
+
+  painter.end();
+  return true;
+}
+
+void DrawingArea::setBackgroundColor(const QColor &color) {
+  m_bgColor = color;
+  update();
+}
+
+void DrawingArea::setGridSize(int size) {
+  m_gridSize = size;
+  update();
+}
+
+void DrawingArea::setGridVisible(bool visible) {
+  m_gridVisible = visible;
+  update();
+}
+
+void DrawingArea::setPageSize(const QSize &size) { setFixedSize(size); }
+
+void DrawingArea::paintEvent(QPaintEvent *event) {
+  QPainter painter(this);
+  painter.fillRect(rect(), m_bgColor); // 先填充背景色
+
+  painter.setRenderHint(QPainter::Antialiasing); // 抗锯齿
+
+  // 画网格
+  if (m_gridVisible) {                       // 只在网格可见时绘制
+    int gridSize = m_gridSize;               // 网格间距
+    int majorGridStep = 5;                   // 每5格一条粗线
+    QPen thinPen(QColor(200, 200, 200), 1);  // 细线浅灰色
+    QPen thickPen(QColor(120, 120, 120), 2); // 粗线深灰色
+    // 竖线
+    for (int x = 0, idx = 0; x < width(); x += gridSize, ++idx) {
+      if (idx % majorGridStep == 0) {
+        painter.setPen(thickPen);
+      } else {
+        painter.setPen(thinPen);
+      }
+      painter.drawLine(x, 0, x, height());
+    }
+    // 横线
+    for (int y = 0, idx = 0; y < height(); y += gridSize, ++idx) {
+      if (idx % majorGridStep == 0) {
+        painter.setPen(thickPen);
+      } else {
+        painter.setPen(thinPen);
+      }
+      painter.drawLine(0, y, width(), y);
+    }
+  }
+
+  // 画图形
+  for (int i = 0; i < shapes.size(); ++i) {
+    bool showHandles = false;
+    if (i == snappedHandle.shapeIndex)
+      showHandles = true;
+    if (i == selectedIndex) {
+      auto *arrow = dynamic_cast<ShapeArrow *>(shapes[i].get());
+      if (arrow && shapes[i]->isHandleSelected())
+        showHandles = false;
+      else
+        showHandles = true;
+    }
+    shapes[i]->paint(&painter, showHandles);
+  }
+
+  QWidget::paintEvent(event); // 调用父类paintEvent
+}
+
+void DrawingArea::mousePressEvent(QMouseEvent *event) {
+  if (selectedIndex != -1) {
+    // 检查是否点击了锚点
+    const auto &handles = shapes[selectedIndex]->getHandles();
+    for (size_t i = 0; i < handles.size(); ++i) {
+      if (handles[i].rect.contains(event->pos())) {
+        shapes[selectedIndex]->setSelectedHandleIndex(i);
+        lastMousePos = event->pos();
+        dragging = true;
         update();
+        return;
+      }
     }
+  }
+
+  selectedIndex = -1;
+  for (int i = shapes.size() - 1; i >= 0; --i) {
+    if (shapes[i]->boundingRect().contains(event->pos())) {
+      selectedIndex = i;
+      lastMousePos = event->pos();
+      dragging = true;
+      update();
+      return;
+    }
+  }
+  update();
 }
 
-void DrawingArea::dragEnterEvent(QDragEnterEvent *event)
-{
-    if (event->mimeData()->hasFormat("application/x-shape-type"))
-    {
-        event->acceptProposedAction();
-    }
-}
+void DrawingArea::mouseMoveEvent(QMouseEvent *event) {
+  if (dragging && selectedIndex != -1) {
+    if (shapes[selectedIndex]->isHandleSelected()) {
+      if (auto *arrow =
+              dynamic_cast<ShapeArrow *>(shapes[selectedIndex].get())) {
+        int handleIndex = arrow->getSelectedHandleIndex();
+        if (handleIndex != -1) {
+          QPoint mousePos = event->pos();
+          QPoint otherPos = (handleIndex == 0) ? arrow->getLine().p2()
+                                               : arrow->getLine().p1();
+          const int snapDistance = 10;
+          bool foundSnap = false;
+          QPoint snapTarget;
 
-void DrawingArea::dropEvent(QDropEvent *event)
-{
-    if (event->mimeData()->hasFormat("application/x-shape-type"))
-    {
-        QByteArray shapeTypeData = event->mimeData()->data("application/x-shape-type");
-        QString shapeType = QString::fromUtf8(shapeTypeData);
-        QPoint pos = event->pos();
-        std::unique_ptr<ShapeBase> shape;
-        QRect defaultRect(pos.x() - 40, pos.y() - 30, 80, 60);
-
-        // 暂时只处理矩形和椭圆
-        if (shapeType == "rect")
-        {
-            shape = ShapeFactory::createRect(defaultRect);
-        }
-        else if (shapeType == "ellipse")
-        {
-            shape = ShapeFactory::createEllipse(defaultRect);
-        }
-        // else if (shapeType == "polygon") {
-        //     // 待实现
-        // }
-        else if (shapeType == "arrow")
-        {
-            QLine line(pos.x() - 40, pos.y(), pos.x() + 40, pos.y());
-            shape = ShapeFactory::createArrow(line);
-        }
-
-        if (shape)
-        {
-            shapes.push_back(std::move(shape));
-            selectedIndex = shapes.size() - 1;
-            update();
-        }
-        event->acceptProposedAction();
-    }
-}
-
-void DrawingArea::updateConnectedArrows(int shapeIndex, const QPoint &delta)
-{
-    // 遍历所有箭头连接
-    for (auto &connection : arrowConnections)
-    {
-        if (connection.shapeIndex == shapeIndex)
-        {
-            // 找到对应的箭头
-            if (auto *arrow = dynamic_cast<ShapeArrow *>(shapes[connection.arrowIndex].get()))
-            {
-                // 获取连接的锚点位置
-                const auto &anchors = shapes[shapeIndex]->getArrowAnchors();
-                if (connection.handleIndex < anchors.size())
-                {
-                    QPoint newAnchorPos = anchors[connection.handleIndex].rect.center();
-                    // 更新箭头端点
-                    if (connection.isStartPoint)
-                    {
-                        arrow->setP1(newAnchorPos);
-                    }
-                    else
-                    {
-                        arrow->setP2(newAnchorPos);
-                    }
-                }
+          // 检查所有图形的锚点
+          for (size_t i = 0; i < shapes.size(); ++i) {
+            if (i == selectedIndex)
+              continue;
+            if (dynamic_cast<ShapeArrow *>(shapes[i].get()))
+              continue;
+            const auto &arrowAnchors = shapes[i]->getArrowAnchors();
+            for (size_t j = 0; j < arrowAnchors.size(); ++j) {
+              if (arrowAnchors[j].type != ShapeBase::Handle::ArrowAnchor)
+                continue;
+              QPoint target = arrowAnchors[j].rect.center();
+              if (target == otherPos)
+                continue;
+              if ((mousePos - target).manhattanLength() <= snapDistance) {
+                snapTarget = target;
+                snappedHandle = {static_cast<int>(i), static_cast<int>(j),
+                                 target};
+                foundSnap = true;
+                break;
+              }
             }
+            if (foundSnap)
+              break;
+          }
+          if (foundSnap) {
+            // 只锁定端点，不再跟随鼠标
+            if (handleIndex == 0)
+              arrow->setP1(snapTarget);
+            else
+              arrow->setP2(snapTarget);
+          } else {
+            // 没有吸附，端点跟随鼠标
+            if (handleIndex == 0)
+              arrow->setP1(mousePos);
+            else
+              arrow->setP2(mousePos);
+            snappedHandle = {-1, -1, QPoint()};
+          }
+          update();
         }
-    }
-}
-
-void DrawingArea::createContextMenu()
-{
-    m_contextMenu = new QMenu(this);
-    
-    QAction *copyAction = m_contextMenu->addAction("复制");
-    QAction *cutAction = m_contextMenu->addAction("剪切");
-    QAction *pasteAction = m_contextMenu->addAction("粘贴");
-    m_contextMenu->addSeparator();
-    QAction *deleteAction = m_contextMenu->addAction("删除");
-
-    // 根据是否有选中图形来设置菜单项的可用状态
-    copyAction->setEnabled(selectedIndex != -1);
-    cutAction->setEnabled(selectedIndex != -1);
-    deleteAction->setEnabled(selectedIndex != -1);
-    pasteAction->setEnabled(m_clipboardShape != nullptr);
-
-    connect(copyAction, &QAction::triggered, this, &DrawingArea::copySelectedShape);
-    connect(cutAction, &QAction::triggered, this, &DrawingArea::cutSelectedShape);
-    connect(pasteAction, &QAction::triggered, this, &DrawingArea::pasteShape);
-    connect(deleteAction, &QAction::triggered, this, &DrawingArea::deleteSelectedShape);
-}
-
-void DrawingArea::contextMenuEvent(QContextMenuEvent *event)
-{
-    // 更新菜单项的可用状态
-    if (m_contextMenu) {
-        for (QAction *action : m_contextMenu->actions()) {
-            if (action->text() == "复制" ||
-                action->text() == "剪切" ||
-                action->text() == "删除") {
-                action->setEnabled(selectedIndex != -1);
-            } else if (action->text() == "粘贴") {
-                action->setEnabled(m_clipboardShape != nullptr);
-            }
-        }
-    }
-    
-    // 显示菜单
-    m_contextMenu->exec(event->globalPos());
-}
-
-void DrawingArea::copySelectedShape()
-{
-    if (selectedIndex != -1 && selectedIndex < shapes.size()) {
-        m_clipboardShape = shapes[selectedIndex]->clone();
-    }
-}
-
-void DrawingArea::cutSelectedShape()
-{
-    if (selectedIndex != -1 && selectedIndex < shapes.size()) {
-        copySelectedShape();
-        deleteSelectedShape();
-    }
-}
-
-void DrawingArea::pasteShape()
-{
-    if (m_clipboardShape) {
-        std::unique_ptr<ShapeBase> newShape = m_clipboardShape->clone();
-        // 将新图形放在鼠标右键点击的位置
-        QRect rect = newShape->getRect();
-        QPoint offset = mapFromGlobal(QCursor::pos()) - rect.center();
-        rect.moveCenter(offset);
-        newShape->setRect(rect);
-        
-        shapes.push_back(std::move(newShape));
-        selectedIndex = shapes.size() - 1;
+      } else {
+        // 处理非箭头图形的缩放
+        QPoint delta = event->pos() - lastMousePos;
+        shapes[selectedIndex]->handleAnchorInteraction(event->pos(),
+                                                       lastMousePos);
+        updateConnectedArrows(selectedIndex, delta);
+        lastMousePos = event->pos();
         update();
+      }
+    } else {
+      // 图形整体拖动
+      QPoint delta = event->pos() - lastMousePos;
+      shapes[selectedIndex]->moveBy(delta);
+      updateConnectedArrows(selectedIndex, delta);
+      lastMousePos = event->pos();
+      update();
     }
+  }
 }
 
-void DrawingArea::deleteSelectedShape()
-{
-    if (selectedIndex != -1 && selectedIndex < shapes.size()) {
-        // 删除相关的箭头连接
-        auto it = std::remove_if(arrowConnections.begin(), arrowConnections.end(),
-            [this](const ArrowConnection& conn) {
-                return conn.arrowIndex == selectedIndex || conn.shapeIndex == selectedIndex;
-            });
-        arrowConnections.erase(it, arrowConnections.end());
-        
-        // 删除选中的图形
-        shapes.erase(shapes.begin() + selectedIndex);
-        selectedIndex = -1;
-        update();
+void DrawingArea::mouseReleaseEvent(QMouseEvent *event) {
+  if (selectedIndex != -1) {
+    if (auto *arrow = dynamic_cast<ShapeArrow *>(shapes[selectedIndex].get())) {
+      // 如果箭头正在连接到一个图形
+      if (snappedHandle.shapeIndex != -1) {
+        // 记录连接关系
+        ArrowConnection connection;
+        connection.arrowIndex = selectedIndex;
+        connection.shapeIndex = snappedHandle.shapeIndex;
+        connection.handleIndex = snappedHandle.handleIndex;
+        connection.isStartPoint = (arrow->getSelectedHandleIndex() == 0);
+        arrowConnections.push_back(connection);
+      }
     }
+    shapes[selectedIndex]->clearHandleSelection();
+  }
+  snappedHandle = {-1, -1, QPoint()};
+  dragging = false;
 }
 
-void DrawingArea::moveShapeUp()
-{
-    if (selectedIndex < 0 || selectedIndex >= static_cast<int>(shapes.size()) - 1) {
+void DrawingArea::mouseDoubleClickEvent(QMouseEvent *event) {
+  // 查找点击的图形
+  for (int i = shapes.size() - 1; i >= 0; --i) {
+    if (shapes[i]->contains(event->pos())) {
+      // 检查图形是否支持文本编辑
+      if (shapes[i]->isTextEditable()) {
+        startTextEditing(i);
         return;
+      }
     }
-    
-    // 交换当前图形和上一个图形
-    std::swap(shapes[selectedIndex], shapes[selectedIndex + 1]);
-    selectedIndex++;
-    update();
+  }
 }
 
-void DrawingArea::moveShapeDown()
-{
-    if (selectedIndex <= 0 || selectedIndex >= static_cast<int>(shapes.size())) {
-        return;
-    }
-    
-    // 交换当前图形和下一个图形
-    std::swap(shapes[selectedIndex], shapes[selectedIndex - 1]);
-    selectedIndex--;
-    update();
+void DrawingArea::startTextEditing(int shapeIndex) {
+  // 如果已经在编辑其他图形，先完成编辑
+  if (m_textEdit) {
+    finishTextEditing();
+  }
+
+  // 根据图形类型创建不同的文本编辑控件
+  if (dynamic_cast<ShapeEllipse *>(shapes[shapeIndex].get())) {
+    m_textEdit = new EllipseTextEdit(this);
+  } else {
+    m_textEdit = new QLineEdit(this);
+  }
+
+  // 设置文本编辑控件的基本属性
+  m_textEdit->setGeometry(
+      shapes[shapeIndex]->boundingRect().adjusted(5, 5, -5, -5));
+  if (auto *lineEdit = qobject_cast<QLineEdit *>(m_textEdit)) {
+    lineEdit->setText(shapes[shapeIndex]->getText());
+    lineEdit->setAlignment(Qt::AlignCenter);
+    lineEdit->show();
+    lineEdit->setFocus();
+
+    // 连接编辑完成的信号
+    connect(lineEdit, &QLineEdit::editingFinished, this,
+            &DrawingArea::finishTextEditing);
+    connect(lineEdit, &QLineEdit::returnPressed, this,
+            &DrawingArea::finishTextEditing);
+  }
+
+  // 设置图形为编辑状态
+  shapes[shapeIndex]->setEditing(true);
+  selectedIndex = shapeIndex;
 }
 
-void DrawingArea::moveShapeToTop()
-{
-    if (selectedIndex < 0 || selectedIndex >= static_cast<int>(shapes.size())) {
-        return;
-    }
-    
-    // 将选中的图形移到最顶层
-    auto shape = std::move(shapes[selectedIndex]);
+void DrawingArea::finishTextEditing() {
+  if (!m_textEdit || selectedIndex == -1)
+    return;
+
+  // 获取编辑后的文本
+  QString newText;
+  if (auto *lineEdit = qobject_cast<QLineEdit *>(m_textEdit)) {
+    newText = lineEdit->text();
+  }
+  shapes[selectedIndex]->setText(newText);
+  shapes[selectedIndex]->setEditing(false);
+
+  // 清理编辑控件
+  m_textEdit->deleteLater();
+  m_textEdit = nullptr;
+
+  // 更新显示
+  update();
+}
+
+void DrawingArea::keyPressEvent(QKeyEvent *event) {
+  if (m_textEdit && m_textEdit->hasFocus()) {
+    // 如果正在编辑文本，让文本编辑控件处理键盘事件
+    QWidget::keyPressEvent(event);
+    return;
+  }
+
+  if (selectedIndex != -1 &&
+      (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace)) {
+    // 删除相关的箭头连接
+    arrowConnections.erase(
+        std::remove_if(arrowConnections.begin(), arrowConnections.end(),
+                       [this](const ArrowConnection &conn) {
+                         return conn.shapeIndex == selectedIndex ||
+                                conn.arrowIndex == selectedIndex;
+                       }),
+        arrowConnections.end());
+
     shapes.erase(shapes.begin() + selectedIndex);
-    shapes.push_back(std::move(shape));
+    selectedIndex = -1;
+    update();
+  }
+}
+
+void DrawingArea::dragEnterEvent(QDragEnterEvent *event) {
+  if (event->mimeData()->hasFormat("application/x-shape-type")) {
+    event->acceptProposedAction();
+  }
+}
+
+void DrawingArea::dropEvent(QDropEvent *event) {
+  if (event->mimeData()->hasFormat("application/x-shape-type")) {
+    QByteArray shapeTypeData =
+        event->mimeData()->data("application/x-shape-type");
+    QString shapeType = QString::fromUtf8(shapeTypeData);
+    QPoint pos = event->pos();
+    std::unique_ptr<ShapeBase> shape;
+    QRect defaultRect(pos.x() - 40, pos.y() - 30, 80, 60);
+
+    // 暂时只处理矩形和椭圆
+    if (shapeType == "rect") {
+      shape = ShapeFactory::createRect(defaultRect);
+    } else if (shapeType == "ellipse") {
+      shape = ShapeFactory::createEllipse(defaultRect);
+    }
+    // else if (shapeType == "polygon") {
+    //     // 待实现
+    // }
+    else if (shapeType == "arrow") {
+      QLine line(pos.x() - 40, pos.y(), pos.x() + 40, pos.y());
+      shape = ShapeFactory::createArrow(line);
+    }
+
+    if (shape) {
+      shapes.push_back(std::move(shape));
+      selectedIndex = shapes.size() - 1;
+      update();
+    }
+    event->acceptProposedAction();
+  }
+}
+
+void DrawingArea::updateConnectedArrows(int shapeIndex, const QPoint &delta) {
+  // 遍历所有箭头连接
+  for (auto &connection : arrowConnections) {
+    if (connection.shapeIndex == shapeIndex) {
+      // 找到对应的箭头
+      if (auto *arrow =
+              dynamic_cast<ShapeArrow *>(shapes[connection.arrowIndex].get())) {
+        // 获取连接的锚点位置
+        const auto &anchors = shapes[shapeIndex]->getArrowAnchors();
+        if (connection.handleIndex < anchors.size()) {
+          QPoint newAnchorPos = anchors[connection.handleIndex].rect.center();
+          // 更新箭头端点
+          if (connection.isStartPoint) {
+            arrow->setP1(newAnchorPos);
+          } else {
+            arrow->setP2(newAnchorPos);
+          }
+        }
+      }
+    }
+  }
+}
+
+void DrawingArea::createContextMenu() {
+  m_contextMenu = new QMenu(this);
+
+  QAction *copyAction = m_contextMenu->addAction("复制");
+  QAction *cutAction = m_contextMenu->addAction("剪切");
+  QAction *pasteAction = m_contextMenu->addAction("粘贴");
+  m_contextMenu->addSeparator();
+  QAction *deleteAction = m_contextMenu->addAction("删除");
+
+  // 根据是否有选中图形来设置菜单项的可用状态
+  copyAction->setEnabled(selectedIndex != -1);
+  cutAction->setEnabled(selectedIndex != -1);
+  deleteAction->setEnabled(selectedIndex != -1);
+  pasteAction->setEnabled(m_clipboardShape != nullptr);
+
+  connect(copyAction, &QAction::triggered, this,
+          &DrawingArea::copySelectedShape);
+  connect(cutAction, &QAction::triggered, this, &DrawingArea::cutSelectedShape);
+  connect(pasteAction, &QAction::triggered, this, &DrawingArea::pasteShape);
+  connect(deleteAction, &QAction::triggered, this,
+          &DrawingArea::deleteSelectedShape);
+}
+
+void DrawingArea::contextMenuEvent(QContextMenuEvent *event) {
+  // 更新菜单项的可用状态
+  if (m_contextMenu) {
+    for (QAction *action : m_contextMenu->actions()) {
+      if (action->text() == "复制" || action->text() == "剪切" ||
+          action->text() == "删除") {
+        action->setEnabled(selectedIndex != -1);
+      } else if (action->text() == "粘贴") {
+        action->setEnabled(m_clipboardShape != nullptr);
+      }
+    }
+  }
+
+  // 显示菜单
+  m_contextMenu->exec(event->globalPos());
+}
+
+void DrawingArea::copySelectedShape() {
+  if (selectedIndex != -1 && selectedIndex < shapes.size()) {
+    m_clipboardShape = shapes[selectedIndex]->clone();
+  }
+}
+
+void DrawingArea::cutSelectedShape() {
+  if (selectedIndex != -1 && selectedIndex < shapes.size()) {
+    copySelectedShape();
+    deleteSelectedShape();
+  }
+}
+
+void DrawingArea::pasteShape() {
+  if (m_clipboardShape) {
+    std::unique_ptr<ShapeBase> newShape = m_clipboardShape->clone();
+    // 将新图形放在鼠标右键点击的位置
+    QRect rect = newShape->getRect();
+    QPoint offset = mapFromGlobal(QCursor::pos()) - rect.center();
+    rect.moveCenter(offset);
+    newShape->setRect(rect);
+
+    shapes.push_back(std::move(newShape));
     selectedIndex = shapes.size() - 1;
     update();
+  }
 }
 
-void DrawingArea::moveShapeToBottom()
-{
-    if (selectedIndex < 0 || selectedIndex >= static_cast<int>(shapes.size())) {
-        return;
-    }
-    
-    // 将选中的图形移到最底层
-    auto shape = std::move(shapes[selectedIndex]);
+void DrawingArea::deleteSelectedShape() {
+  if (selectedIndex != -1 && selectedIndex < shapes.size()) {
+    // 删除相关的箭头连接
+    auto it = std::remove_if(arrowConnections.begin(), arrowConnections.end(),
+                             [this](const ArrowConnection &conn) {
+                               return conn.arrowIndex == selectedIndex ||
+                                      conn.shapeIndex == selectedIndex;
+                             });
+    arrowConnections.erase(it, arrowConnections.end());
+
+    // 删除选中的图形
     shapes.erase(shapes.begin() + selectedIndex);
-    shapes.insert(shapes.begin(), std::move(shape));
-    selectedIndex = 0;
+    selectedIndex = -1;
     update();
+  }
+}
+
+void DrawingArea::moveShapeUp() {
+  if (selectedIndex < 0 ||
+      selectedIndex >= static_cast<int>(shapes.size()) - 1) {
+    return;
+  }
+
+  // 交换当前图形和上一个图形
+  std::swap(shapes[selectedIndex], shapes[selectedIndex + 1]);
+  selectedIndex++;
+  update();
+}
+
+void DrawingArea::moveShapeDown() {
+  if (selectedIndex <= 0 || selectedIndex >= static_cast<int>(shapes.size())) {
+    return;
+  }
+
+  // 交换当前图形和下一个图形
+  std::swap(shapes[selectedIndex], shapes[selectedIndex - 1]);
+  selectedIndex--;
+  update();
+}
+
+void DrawingArea::moveShapeToTop() {
+  if (selectedIndex < 0 || selectedIndex >= static_cast<int>(shapes.size())) {
+    return;
+  }
+
+  // 将选中的图形移到最顶层
+  auto shape = std::move(shapes[selectedIndex]);
+  shapes.erase(shapes.begin() + selectedIndex);
+  shapes.push_back(std::move(shape));
+  selectedIndex = shapes.size() - 1;
+  update();
+}
+
+void DrawingArea::moveShapeToBottom() {
+  if (selectedIndex < 0 || selectedIndex >= static_cast<int>(shapes.size())) {
+    return;
+  }
+
+  // 将选中的图形移到最底层
+  auto shape = std::move(shapes[selectedIndex]);
+  shapes.erase(shapes.begin() + selectedIndex);
+  shapes.insert(shapes.begin(), std::move(shape));
+  selectedIndex = 0;
+  update();
 }
