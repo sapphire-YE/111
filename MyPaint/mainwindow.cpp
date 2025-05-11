@@ -72,9 +72,9 @@ MainWindow::~MainWindow()
 void MainWindow::createMenus()
 {
     // 创建文件菜单
-    QMenu *fileMenu = menuBar()->addMenu(tr("文件(&F)"));
+    QMenu *fileMenu = menuBar()->addMenu("文件(&F)");
 
-    QAction *saveAsAction = fileMenu->addAction(tr("另存为(&A)"), this, &MainWindow::onSaveAs);
+    QAction *saveAsAction = fileMenu->addAction("另存为(&A)", this, &MainWindow::onSaveAs);
     saveAsAction->setShortcut(QKeySequence::SaveAs);
 }
 
@@ -88,8 +88,8 @@ void MainWindow::setupConnections()
     // 连接导出按钮
     connect(ui->actionExport, &QAction::triggered, this, [this]() {
         QMenu* exportMenu = new QMenu(this);
-        exportMenu->addAction(tr("导出为PNG"), this, &MainWindow::onExportPNG);
-        exportMenu->addAction(tr("导出为SVG"), this, &MainWindow::onExportSVG);
+        exportMenu->addAction("导出为PNG", this, &MainWindow::onExportPNG);
+        exportMenu->addAction("导出为SVG", this, &MainWindow::onExportSVG);
         
         // 获取工具栏按钮的位置
         QToolBar* toolbar = ui->startToolBar;
@@ -107,26 +107,26 @@ void MainWindow::onNewFile()
     {
         m_drawingArea->clear();
         m_currentFile.clear();
-        setWindowTitle(tr("未命名 - 流程图"));
+        setWindowTitle("未命名 - 流程图");
     }
 }
 
 void MainWindow::onOpenFile()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("打开流程图"), "",
-                                                    tr("流程图文件 (*.flow);;所有文件 (*)"));
+                                                    "打开流程图", "",
+                                                    "流程图文件 (*.flow);;所有文件 (*)");
 
     if (!fileName.isEmpty())
     {
         if (m_drawingArea && m_drawingArea->loadFromFile(fileName))
         {
             m_currentFile = fileName;
-            setWindowTitle(QFileInfo(fileName).fileName() + tr(" - 流程图"));
+            setWindowTitle(QFileInfo(fileName).fileName() + " - 流程图");
         }
         else
         {
-            QMessageBox::warning(this, tr("错误"), tr("无法打开文件"));
+            QMessageBox::warning(this, "错误", "无法打开文件");
         }
     }
 }
@@ -141,7 +141,7 @@ void MainWindow::onSaveFile()
     {
         if (m_drawingArea && !m_drawingArea->saveToFile(m_currentFile))
         {
-            QMessageBox::warning(this, tr("错误"), tr("保存文件失败"));
+            QMessageBox::warning(this, "错误", "保存文件失败");
         }
     }
 }
@@ -149,19 +149,19 @@ void MainWindow::onSaveFile()
 void MainWindow::onSaveAs()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("保存流程图"), "",
-                                                    tr("流程图文件 (*.flow);;所有文件 (*)"));
+                                                    "保存流程图", "",
+                                                    "流程图文件 (*.flow);;所有文件 (*)");
 
     if (!fileName.isEmpty())
     {
         if (m_drawingArea && m_drawingArea->saveToFile(fileName))
         {
             m_currentFile = fileName;
-            setWindowTitle(QFileInfo(fileName).fileName() + tr(" - 流程图"));
+            setWindowTitle(QFileInfo(fileName).fileName() + " - 流程图");
         }
         else
         {
-            QMessageBox::warning(this, tr("错误"), tr("保存文件失败"));
+            QMessageBox::warning(this, "错误", "保存文件失败");
         }
     }
 }
@@ -169,14 +169,14 @@ void MainWindow::onSaveAs()
 void MainWindow::onExportPNG()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("导出PNG"), "",
-                                                    tr("PNG图片 (*.png)"));
+                                                    "导出PNG", "",
+                                                    "PNG图片 (*.png)");
 
     if (!fileName.isEmpty() && m_drawingArea)
     {
         if (!m_drawingArea->exportToPNG(fileName))
         {
-            QMessageBox::warning(this, tr("错误"), tr("导出PNG失败"));
+            QMessageBox::warning(this, "错误", "导出PNG失败");
         }
     }
 }
@@ -184,14 +184,14 @@ void MainWindow::onExportPNG()
 void MainWindow::onExportSVG()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("导出SVG"), "",
-                                                    tr("SVG文件 (*.svg)"));
+                                                    "导出SVG", "",
+                                                    "SVG文件 (*.svg)");
 
     if (!fileName.isEmpty() && m_drawingArea)
     {
         if (!m_drawingArea->exportToSVG(fileName))
         {
-            QMessageBox::warning(this, tr("错误"), tr("导出SVG失败"));
+            QMessageBox::warning(this, "错误", "导出SVG失败");
         }
     }
 }

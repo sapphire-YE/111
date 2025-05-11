@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.10)  #cmake�汾���3.10
+cmake_minimum_required(VERSION 3.10)  #cmake版本需要3.10
 
-# ��ȡ��ǰ��CMake�ļ�����Ŀ¼������·�� 
+# 获取当前CMake文件所在的目录的绝对路径 
 get_filename_component(CURRENT_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE) 
-# ������·������ȡĿ¼���� 
+# 从路径中获取目录名 
 get_filename_component(CURRENT_DIR_NAME "${CURRENT_DIR_PATH}" NAME) 
 project(${CURRENT_DIR_NAME})
 
@@ -19,7 +19,7 @@ SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTORCC ON)
 SET(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Core Widgets Gui LinguistTools Svg REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets Gui Svg REQUIRED)
 
 file(GLOB UI_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.ui")
 file(GLOB RCC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*qrc")
@@ -31,25 +31,11 @@ qt5_wrap_ui(UI_HEADERS ${UI_FILES})
 source_group("Form Files" FILES ${UI_FILES})
 source_group("Resource Files" FILES ${RCC_FILES})
 
-set(TS_FILES ${CMAKE_SOURCE_DIR}/mui/zh_CN/lessoncode.ts)
-set(QM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}/mui/zh_CN/)
-
-qt5_create_translation(QM_FILES ${HEADER_FILES} ${CPP_FILES} ${UI_FILES} ${TS_FILES})
-
-add_executable(${PROJECT_NAME} WIN32 ${HEADER_FILES} ${CPP_FILES} ${UI_FILES} ${RCC_FILES} ${QM_FILES})
+add_executable(${PROJECT_NAME} WIN32 ${HEADER_FILES} ${CPP_FILES} ${UI_FILES} ${RCC_FILES})
 
 target_link_libraries(${PROJECT_NAME} 
 	Qt5::Widgets
 	Qt5::Core
 	Qt5::Gui
 	Qt5::Svg
-)
-
-add_custom_target(translations DEPENDS ${QM_FILES})
-add_dependencies(${PROJECT_NAME} translations)
-
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E make_directory ${QM_OUTPUT_DIR}
-	COMMAND ${CMAKE_COMMAND} -E copy ${QM_FILES} ${QM_OUTPUT_DIR}
-	COMMENT "Copying .qm files to ${QM_OUTPUT_DIR}"
 )

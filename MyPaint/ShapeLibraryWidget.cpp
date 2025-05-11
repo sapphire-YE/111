@@ -37,10 +37,10 @@ ShapeLibraryWidget::~ShapeLibraryWidget()
 void ShapeLibraryWidget::initShapeItems()
 {
     // 添加基本图形
-    addShapeItem(tr("Rectangle"), "rect");
-    addShapeItem(tr("Ellipse"), "ellipse");
-    // addShapeItem(tr("Polygon"), "polygon");
-    addShapeItem(tr("Arrow"), "arrow");
+    addShapeItem("Rectangle", "rect");
+    addShapeItem("Ellipse", "ellipse");
+    // addShapeItem("Polygon", "polygon");
+    addShapeItem("Arrow", "arrow");
 }
 
 QString ShapeLibraryWidget::getCurrentShapeType() const
