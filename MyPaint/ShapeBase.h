@@ -4,6 +4,7 @@
 #include <QPoint>
 #include <vector>
 #include <QJsonObject>
+#include <memory>
 
 class ShapeArrow; // 前置声明
 
@@ -15,7 +16,8 @@ struct ShapeHandle
     {
         Scale,
         Arrow,
-        ArrowAnchor
+        ArrowAnchor,
+        Rotate  // 旋转锚点类型
     } type;
     int direction;
 };
@@ -31,6 +33,12 @@ public:
     virtual void moveBy(const QPoint &delta) = 0;
     virtual void resize(const QRect &newRect) = 0;
     virtual QRect boundingRect() const = 0;
+    virtual void rotate(double angle) = 0;  // 旋转图形
+
+    // 复制和矩形操作相关方法
+    virtual std::unique_ptr<ShapeBase> clone() const = 0;  // 克隆当前图形
+    virtual QRect getRect() const { return boundingRect(); }  // 获取矩形区域
+    virtual void setRect(const QRect &rect) { resize(rect); }  // 设置矩形区域
 
     // 统一用 ShapeHandle
     using Handle = ShapeHandle;
@@ -42,8 +50,12 @@ public:
     virtual bool needPlusHandles() const { return true; }
     virtual std::vector<Handle> getHandles() const;
 
-    // 新增：获取箭头锚点，默认返回空
+    // 获取箭头锚点，默认返回空
     virtual std::vector<Handle> getArrowAnchors() const { return {}; }
+
+    // 旋转相关方法
+    virtual double getRotation() const { return m_rotation; }  // 获取当前旋转角度
+    virtual void setRotation(double angle) { m_rotation = angle; }  // 设置旋转角度
 
     // 处理锚点交互
     bool handleAnchorInteraction(const QPoint &mousePos, const QPoint &lastMousePos);
@@ -52,7 +64,7 @@ public:
     int getSelectedHandleIndex() const { return m_selectedHandleIndex; }
     void setSelectedHandleIndex(int index) { m_selectedHandleIndex = index; }
 
-    // 新增：文本相关方法
+    // 文本相关方法
     virtual bool isTextEditable() const { return true; } // 默认所有图形都可编辑文本，除了箭头
     virtual void setText(const QString &text) { m_text = text; }
     virtual QString getText() const { return m_text; }
@@ -90,9 +102,10 @@ protected:
     // 计算新的矩形区域
     QRect calculateNewRect(const QPoint &mousePos, const QPoint &lastMousePos) const;
 
-    // 新增：文本相关属性
+    // 文本相关属性
     QString m_text;
     bool m_isEditing = false;
+    double m_rotation = 0.0;  // 旋转角度（弧度）
 
 private:
     int m_selectedHandleIndex = -1; // 当前选中的锚点索引

@@ -29,6 +29,12 @@ private slots:
     void onExportPNG();
     void onExportSVG();
 
+    // 排列相关的槽函数
+    void onMoveUp();
+    void onMoveDown();
+    void onMoveToTop();
+    void onMoveToBottom();
+
 private:
     void createMenus();
     void setupConnections();
@@ -38,6 +44,12 @@ private:
     ShapeLibraryWidget *m_shapeLibrary;
     QString m_currentFile; // 当前打开的文件路径
     QAction *actionExport; // 导出按钮动作
+
+    // 排列相关的动作
+    QAction *actionMoveUp;
+    QAction *actionMoveDown;
+    QAction *actionMoveToTop;
+    QAction *actionMoveToBottom;
 };
 
 #endif // MAINWINDOW_H

@@ -97,6 +97,19 @@
           <addaction name="actionGridLarge"/>
          </widget>
         </item>
+        <item>
+         <widget class="QToolButton" name="toolButtonGridVisible">
+          <property name="text">
+           <string>Show Grid</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </widget>

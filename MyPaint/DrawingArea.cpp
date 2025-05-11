@@ -13,6 +13,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QMenu>
 
 DrawingArea::DrawingArea(QWidget *parent)
     : QWidget(parent)
@@ -20,6 +21,21 @@ DrawingArea::DrawingArea(QWidget *parent)
     setObjectName("drawingArea");
     setFocusPolicy(Qt::StrongFocus); // 允许接收键盘事件
     setAcceptDrops(true);            // 允许接收拖拽
+    setMouseTracking(true);
+    createContextMenu(); // 创建右键菜单
+}
+
+DrawingArea::~DrawingArea()
+{
+    // 清理资源
+    if (m_textEdit) {
+        delete m_textEdit;
+        m_textEdit = nullptr;
+    }
+    if (m_contextMenu) {
+        delete m_contextMenu;
+        m_contextMenu = nullptr;
+    }
 }
 
 bool DrawingArea::saveToFile(const QString &fileName)
@@ -203,6 +219,12 @@ void DrawingArea::setGridSize(int size)
     update();
 }
 
+void DrawingArea::setGridVisible(bool visible)
+{
+    m_gridVisible = visible;
+    update();
+}
+
 void DrawingArea::setPageSize(const QSize &size)
 {
     setFixedSize(size);
@@ -216,35 +238,37 @@ void DrawingArea::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing); // 抗锯齿
 
     // 画网格
-    int gridSize = m_gridSize;               // 网格间距
-    int majorGridStep = 5;                   // 每5格一条粗线
-    QPen thinPen(QColor(200, 200, 200), 1);  // 细线浅灰色
-    QPen thickPen(QColor(120, 120, 120), 2); // 粗线深灰色
-    // 竖线
-    for (int x = 0, idx = 0; x < width(); x += gridSize, ++idx)
-    {
-        if (idx % majorGridStep == 0)
+    if (m_gridVisible) {  // 只在网格可见时绘制
+        int gridSize = m_gridSize;               // 网格间距
+        int majorGridStep = 5;                   // 每5格一条粗线
+        QPen thinPen(QColor(200, 200, 200), 1);  // 细线浅灰色
+        QPen thickPen(QColor(120, 120, 120), 2); // 粗线深灰色
+        // 竖线
+        for (int x = 0, idx = 0; x < width(); x += gridSize, ++idx)
         {
-            painter.setPen(thickPen);
+            if (idx % majorGridStep == 0)
+            {
+                painter.setPen(thickPen);
+            }
+            else
+            {
+                painter.setPen(thinPen);
+            }
+            painter.drawLine(x, 0, x, height());
         }
-        else
+        // 横线
+        for (int y = 0, idx = 0; y < height(); y += gridSize, ++idx)
         {
-            painter.setPen(thinPen);
+            if (idx % majorGridStep == 0)
+            {
+                painter.setPen(thickPen);
+            }
+            else
+            {
+                painter.setPen(thinPen);
+            }
+            painter.drawLine(0, y, width(), y);
         }
-        painter.drawLine(x, 0, x, height());
-    }
-    // 横线
-    for (int y = 0, idx = 0; y < height(); y += gridSize, ++idx)
-    {
-        if (idx % majorGridStep == 0)
-        {
-            painter.setPen(thickPen);
-        }
-        else
-        {
-            painter.setPen(thinPen);
-        }
-        painter.drawLine(0, y, width(), y);
     }
 
     // 画图形
@@ -586,4 +610,145 @@ void DrawingArea::updateConnectedArrows(int shapeIndex, const QPoint &delta)
             }
         }
     }
+}
+
+void DrawingArea::createContextMenu()
+{
+    m_contextMenu = new QMenu(this);
+    
+    QAction *copyAction = m_contextMenu->addAction("复制");
+    QAction *cutAction = m_contextMenu->addAction("剪切");
+    QAction *pasteAction = m_contextMenu->addAction("粘贴");
+    m_contextMenu->addSeparator();
+    QAction *deleteAction = m_contextMenu->addAction("删除");
+
+    // 根据是否有选中图形来设置菜单项的可用状态
+    copyAction->setEnabled(selectedIndex != -1);
+    cutAction->setEnabled(selectedIndex != -1);
+    deleteAction->setEnabled(selectedIndex != -1);
+    pasteAction->setEnabled(m_clipboardShape != nullptr);
+
+    connect(copyAction, &QAction::triggered, this, &DrawingArea::copySelectedShape);
+    connect(cutAction, &QAction::triggered, this, &DrawingArea::cutSelectedShape);
+    connect(pasteAction, &QAction::triggered, this, &DrawingArea::pasteShape);
+    connect(deleteAction, &QAction::triggered, this, &DrawingArea::deleteSelectedShape);
+}
+
+void DrawingArea::contextMenuEvent(QContextMenuEvent *event)
+{
+    // 更新菜单项的可用状态
+    if (m_contextMenu) {
+        for (QAction *action : m_contextMenu->actions()) {
+            if (action->text() == "复制" ||
+                action->text() == "剪切" ||
+                action->text() == "删除") {
+                action->setEnabled(selectedIndex != -1);
+            } else if (action->text() == "粘贴") {
+                action->setEnabled(m_clipboardShape != nullptr);
+            }
+        }
+    }
+    
+    // 显示菜单
+    m_contextMenu->exec(event->globalPos());
+}
+
+void DrawingArea::copySelectedShape()
+{
+    if (selectedIndex != -1 && selectedIndex < shapes.size()) {
+        m_clipboardShape = shapes[selectedIndex]->clone();
+    }
+}
+
+void DrawingArea::cutSelectedShape()
+{
+    if (selectedIndex != -1 && selectedIndex < shapes.size()) {
+        copySelectedShape();
+        deleteSelectedShape();
+    }
+}
+
+void DrawingArea::pasteShape()
+{
+    if (m_clipboardShape) {
+        std::unique_ptr<ShapeBase> newShape = m_clipboardShape->clone();
+        // 将新图形放在鼠标右键点击的位置
+        QRect rect = newShape->getRect();
+        QPoint offset = mapFromGlobal(QCursor::pos()) - rect.center();
+        rect.moveCenter(offset);
+        newShape->setRect(rect);
+        
+        shapes.push_back(std::move(newShape));
+        selectedIndex = shapes.size() - 1;
+        update();
+    }
+}
+
+void DrawingArea::deleteSelectedShape()
+{
+    if (selectedIndex != -1 && selectedIndex < shapes.size()) {
+        // 删除相关的箭头连接
+        auto it = std::remove_if(arrowConnections.begin(), arrowConnections.end(),
+            [this](const ArrowConnection& conn) {
+                return conn.arrowIndex == selectedIndex || conn.shapeIndex == selectedIndex;
+            });
+        arrowConnections.erase(it, arrowConnections.end());
+        
+        // 删除选中的图形
+        shapes.erase(shapes.begin() + selectedIndex);
+        selectedIndex = -1;
+        update();
+    }
+}
+
+void DrawingArea::moveShapeUp()
+{
+    if (selectedIndex < 0 || selectedIndex >= static_cast<int>(shapes.size()) - 1) {
+        return;
+    }
+    
+    // 交换当前图形和上一个图形
+    std::swap(shapes[selectedIndex], shapes[selectedIndex + 1]);
+    selectedIndex++;
+    update();
+}
+
+void DrawingArea::moveShapeDown()
+{
+    if (selectedIndex <= 0 || selectedIndex >= static_cast<int>(shapes.size())) {
+        return;
+    }
+    
+    // 交换当前图形和下一个图形
+    std::swap(shapes[selectedIndex], shapes[selectedIndex - 1]);
+    selectedIndex--;
+    update();
+}
+
+void DrawingArea::moveShapeToTop()
+{
+    if (selectedIndex < 0 || selectedIndex >= static_cast<int>(shapes.size())) {
+        return;
+    }
+    
+    // 将选中的图形移到最顶层
+    auto shape = std::move(shapes[selectedIndex]);
+    shapes.erase(shapes.begin() + selectedIndex);
+    shapes.push_back(std::move(shape));
+    selectedIndex = shapes.size() - 1;
+    update();
+}
+
+void DrawingArea::moveShapeToBottom()
+{
+    if (selectedIndex < 0 || selectedIndex >= static_cast<int>(shapes.size())) {
+        return;
+    }
+    
+    // 将选中的图形移到最底层
+    auto shape = std::move(shapes[selectedIndex]);
+    shapes.erase(shapes.begin() + selectedIndex);
+    shapes.insert(shapes.begin(), std::move(shape));
+    selectedIndex = 0;
+    update();
 }

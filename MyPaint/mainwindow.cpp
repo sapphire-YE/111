@@ -55,6 +55,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionGridLarge, &QAction::triggered, this, [this]()
             { m_drawingArea->setGridSize(40); });
 
+    // 连接网格显示/隐藏按钮
+    connect(ui->toolButtonGridVisible, &QToolButton::toggled, this, [this](bool checked) {
+        m_drawingArea->setGridVisible(checked);
+        ui->toolButtonGridVisible->setText(checked ? "Hide Grid" : "Show Grid");
+    });
+
     // 连接页面大小按钮
     connect(ui->actionA3, &QAction::triggered, this, [this]()
             { m_drawingArea->setPageSize(QSize(1500, 2100)); });
@@ -72,10 +78,37 @@ MainWindow::~MainWindow()
 void MainWindow::createMenus()
 {
     // 创建文件菜单
-    QMenu *fileMenu = menuBar()->addMenu("文件(&F)");
+    QMenu *fileMenu = menuBar()->addMenu("文件");
+    fileMenu->addAction("新建", this, &MainWindow::onNewFile, QKeySequence::New);
+    fileMenu->addAction("打开", this, &MainWindow::onOpenFile, QKeySequence::Open);
+    fileMenu->addAction("保存", this, &MainWindow::onSaveFile, QKeySequence::Save);
+    fileMenu->addAction("另存为", this, &MainWindow::onSaveAs, QKeySequence::SaveAs);
+    fileMenu->addSeparator();
+    fileMenu->addAction("导出为PNG", this, &MainWindow::onExportPNG);
+    fileMenu->addAction("导出为SVG", this, &MainWindow::onExportSVG);
 
-    QAction *saveAsAction = fileMenu->addAction("另存为(&A)", this, &MainWindow::onSaveAs);
-    saveAsAction->setShortcut(QKeySequence::SaveAs);
+    // 创建排列菜单
+    QMenu *arrangeMenu = menuBar()->addMenu("排列");
+    actionMoveUp = arrangeMenu->addAction("上移一层", this, &MainWindow::onMoveUp, QKeySequence(Qt::CTRL + Qt::Key_Up));
+    actionMoveDown = arrangeMenu->addAction("下移一层", this, &MainWindow::onMoveDown, QKeySequence(Qt::CTRL + Qt::Key_Down));
+    actionMoveToTop = arrangeMenu->addAction("移到最顶层", this, &MainWindow::onMoveToTop, QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_Up));
+    actionMoveToBottom = arrangeMenu->addAction("移到最底层", this, &MainWindow::onMoveToBottom, QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_Down));
+
+    // 创建开始菜单（应用内部）
+    QMenu *startMenu = new QMenu(this);
+    
+    // 直接添加排列选项到开始菜单
+    startMenu->addAction("上移一层", this, &MainWindow::onMoveUp, QKeySequence(Qt::CTRL + Qt::Key_Up));
+    startMenu->addAction("下移一层", this, &MainWindow::onMoveDown, QKeySequence(Qt::CTRL + Qt::Key_Down));
+    startMenu->addAction("移到最顶层", this, &MainWindow::onMoveToTop, QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_Up));
+    startMenu->addAction("移到最底层", this, &MainWindow::onMoveToBottom, QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_Down));
+
+    // 创建排列按钮
+    QToolButton *arrangeButton = new QToolButton(this);
+    arrangeButton->setText("排列");
+    arrangeButton->setPopupMode(QToolButton::InstantPopup);
+    arrangeButton->setMenu(startMenu);
+    ui->startToolBar->addWidget(arrangeButton);
 }
 
 void MainWindow::setupConnections()
@@ -194,4 +227,25 @@ void MainWindow::onExportSVG()
             QMessageBox::warning(this, "错误", "导出SVG失败");
         }
     }
+}
+
+// 实现排列相关的槽函数
+void MainWindow::onMoveUp()
+{
+    m_drawingArea->moveShapeUp();
+}
+
+void MainWindow::onMoveDown()
+{
+    m_drawingArea->moveShapeDown();
+}
+
+void MainWindow::onMoveToTop()
+{
+    m_drawingArea->moveShapeToTop();
+}
+
+void MainWindow::onMoveToBottom()
+{
+    m_drawingArea->moveShapeToBottom();
 }
