@@ -7,6 +7,7 @@
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QToolBar>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_drawingArea(nullptr), m_shapeLibrary(nullptr), m_currentFile("")
@@ -73,29 +74,31 @@ void MainWindow::createMenus()
     // 创建文件菜单
     QMenu *fileMenu = menuBar()->addMenu(tr("文件(&F)"));
 
-    QAction *newAction = fileMenu->addAction(tr("新建(&N)"), this, &MainWindow::onNewFile);
-    newAction->setShortcut(QKeySequence::New);
-
-    QAction *openAction = fileMenu->addAction(tr("打开(&O)"), this, &MainWindow::onOpenFile);
-    openAction->setShortcut(QKeySequence::Open);
-
-    QAction *saveAction = fileMenu->addAction(tr("保存(&S)"), this, &MainWindow::onSaveFile);
-    saveAction->setShortcut(QKeySequence::Save);
-
     QAction *saveAsAction = fileMenu->addAction(tr("另存为(&A)"), this, &MainWindow::onSaveAs);
     saveAsAction->setShortcut(QKeySequence::SaveAs);
-
-    fileMenu->addSeparator();
-
-    // 创建导出菜单
-    QMenu *exportMenu = fileMenu->addMenu(tr("导出"));
-    exportMenu->addAction(tr("导出为PNG"), this, &MainWindow::onExportPNG);
-    exportMenu->addAction(tr("导出为SVG"), this, &MainWindow::onExportSVG);
 }
 
 void MainWindow::setupConnections()
 {
-    // 其他连接保持不变
+    // 连接文件操作按钮
+    connect(ui->actionNew, &QAction::triggered, this, &MainWindow::onNewFile);
+    connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::onOpenFile);
+    connect(ui->actionSave, &QAction::triggered, this, &MainWindow::onSaveFile);
+
+    // 连接导出按钮
+    connect(ui->actionExport, &QAction::triggered, this, [this]() {
+        QMenu* exportMenu = new QMenu(this);
+        exportMenu->addAction(tr("导出为PNG"), this, &MainWindow::onExportPNG);
+        exportMenu->addAction(tr("导出为SVG"), this, &MainWindow::onExportSVG);
+        
+        // 获取工具栏按钮的位置
+        QToolBar* toolbar = ui->startToolBar;
+        QWidget* button = toolbar->widgetForAction(ui->actionExport);
+        if (button) {
+            QPoint pos = button->mapToGlobal(QPoint(0, button->height()));
+            exportMenu->exec(pos);
+        }
+    });
 }
 
 void MainWindow::onNewFile()

@@ -37,6 +37,7 @@ private:
     DrawingArea *m_drawingArea;
     ShapeLibraryWidget *m_shapeLibrary;
     QString m_currentFile; // 当前打开的文件路径
+    QAction *actionExport; // 导出按钮动作
 };
 
 #endif // MAINWINDOW_H
