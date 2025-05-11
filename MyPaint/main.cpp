@@ -1,12 +1,12 @@
-﻿#include "mainwindow.h"
+#include "mainwindow.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+  QApplication a(argc, argv);
 
-    // 设置工具按钮样式
-    a.setStyleSheet(R"(
+  // 设置工具按钮样式
+  a.setStyleSheet(R"(
 QToolButton {
     border: none;
     background: transparent;
@@ -20,7 +20,7 @@ QToolButton:pressed {
 }
 )");
 
-    MainWindow w;
-    w.show();
-    return a.exec();
+  MainWindow w;
+  w.show();
+  return a.exec();
 }

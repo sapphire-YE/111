@@ -1,5 +1,5 @@
-﻿<RCC>
-    <qresource prefix="/">
-        <file>image/peiqi.png</file>
-    </qresource>
+<RCC>
+<qresource prefix="/">
+<file>image/peiqi.png</file>
+</qresource>
 </RCC>

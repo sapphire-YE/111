@@ -10,8 +10,9 @@
 #include "DrawingArea.h"
 #include "ShapeLibraryWidget.h"
 
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
 
 class MainWindow : public QMainWindow
@@ -33,7 +34,7 @@ private slots:
     void onMoveDown();
     void onMoveToTop();
     void onMoveToBottom();
-    
+
     // 线条样式相关槽
     void onLineColorButtonClicked();
     void onLineWidthChanged(int width);
@@ -48,12 +49,12 @@ private:
     ShapeLibraryWidget *m_shapeLibrary;
     QString m_currentFile;
 
-    QAction* actionMoveUp;          // 上移一层
-    QAction* actionMoveDown;        // 下移一层
-    QAction* actionMoveToTop;       // 移到最顶层
-    QAction* actionMoveToBottom;    // 移到最底层
-    
-    QSpinBox* m_lineWidthSpinBox;   // 线条粗细选择器
+    QAction *actionMoveUp;       // 上移一层
+    QAction *actionMoveDown;     // 下移一层
+    QAction *actionMoveToTop;    // 移到最顶层
+    QAction *actionMoveToBottom; // 移到最底层
+
+    QSpinBox *m_lineWidthSpinBox; // 线条粗细选择器
 };
 
 #endif // MAINWINDOW_H
