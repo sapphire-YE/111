@@ -13,6 +13,7 @@
 #include <QPainter>
 #include <QPen>
 #include <QSvgGenerator>
+#include <QWheelEvent> // 添加对滚轮事件的支持
 #include <algorithm>
 
 DrawingArea::DrawingArea(QWidget *parent) : QWidget(parent)
@@ -210,37 +211,73 @@ bool DrawingArea::exportToSVG(const QString &fileName)
 
 void DrawingArea::setGridSize(int size)
 {
-    m_gridSize = size;
-    update();
-}
-
-void DrawingArea::setGridVisible(bool visible)
-{
-    m_gridVisible = visible;
-    update();
+    if (size != m_gridSize && size > 0)
+    {
+        m_gridSize = size;
+        emit gridSizeChanged(size);
+        update(); // 更新显示
+    }
 }
 
 void DrawingArea::setPageSize(const QSize &size)
 {
-    setFixedSize(size);
+    if (size != m_pageSize && size.width() > 0 && size.height() > 0)
+    {
+        m_pageSize = size;
+        emit pageSizeChanged(size);
+        update(); // 更新显示
+    }
+}
+
+void DrawingArea::setGridVisible(bool visible)
+{
+    if (visible != m_gridVisible)
+    {
+        m_gridVisible = visible;
+        emit gridVisibilityChanged(visible);
+        update(); // 更新显示
+    }
 }
 
 void DrawingArea::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
-    painter.fillRect(rect(), m_bgColor); // 先填充背景色
+    // 填充工作区背景（页面外区域）为浅灰色，更容易区分页面和工作区
+    painter.fillRect(rect(), QColor(240, 240, 240));
 
     painter.setRenderHint(QPainter::Antialiasing); // 抗锯齿
 
-    // 画网格
+    // 首先绘制页面边界
+    QRect pageRect(0, 0, m_pageSize.width(), m_pageSize.height());
+    QRect scaledPageRect = docToScreen(pageRect);
+
+    // 绘制页面背景
+    painter.fillRect(scaledPageRect, m_bgColor); // 使用设置的背景颜色
+
+    // 绘制页面边框，便于识别页面边界
+    QPen pageBorderPen(QColor(180, 180, 180), 1);
+    painter.setPen(pageBorderPen);
+    painter.drawRect(scaledPageRect);
+
+    // 应用缩放变换，用于绘制网格和内容
+    painter.scale(m_zoomFactor, m_zoomFactor);
+
+    // 画网格，但只在页面区域内绘制
     if (m_gridVisible)
-    {                                            // 只在网格可见时绘制
-        int gridSize = m_gridSize;               // 网格间距
-        int majorGridStep = 5;                   // 每5格一条粗线
-        QPen thinPen(QColor(200, 200, 200), 1);  // 细线浅灰色
-        QPen thickPen(QColor(120, 120, 120), 2); // 粗线深灰色
-        // 竖线
-        for (int x = 0, idx = 0; x < width(); x += gridSize, ++idx)
+    {                                                           // 只在网格可见时绘制
+        int gridSize = m_gridSize;                              // 网格间距
+        int majorGridStep = 5;                                  // 每5格一条粗线
+        QPen thinPen(QColor(200, 200, 200), 1 / m_zoomFactor);  // 细线浅灰色，保持线宽不变
+        QPen thickPen(QColor(120, 120, 120), 2 / m_zoomFactor); // 粗线深灰色，保持线宽不变
+
+        // 页面区域就是网格绘制的范围
+        QRect pageDocRect(0, 0, m_pageSize.width(), m_pageSize.height());
+
+        // 竖线 - 只绘制页面内部
+        int startX = 0;                // 从页面左边开始
+        int endX = m_pageSize.width(); // 到页面右边结束
+
+        for (int x = startX, idx = startX / gridSize; x <= endX; x += gridSize, ++idx)
         {
             if (idx % majorGridStep == 0)
             {
@@ -250,10 +287,14 @@ void DrawingArea::paintEvent(QPaintEvent *event)
             {
                 painter.setPen(thinPen);
             }
-            painter.drawLine(x, 0, x, height());
+            painter.drawLine(x, 0, x, m_pageSize.height()); // 从页面顶部到底部
         }
-        // 横线
-        for (int y = 0, idx = 0; y < height(); y += gridSize, ++idx)
+
+        // 横线 - 只绘制页面内部
+        int startY = 0;                 // 从页面顶部开始
+        int endY = m_pageSize.height(); // 到页面底部结束
+
+        for (int y = startY, idx = startY / gridSize; y <= endY; y += gridSize, ++idx)
         {
             if (idx % majorGridStep == 0)
             {
@@ -263,7 +304,7 @@ void DrawingArea::paintEvent(QPaintEvent *event)
             {
                 painter.setPen(thinPen);
             }
-            painter.drawLine(0, y, width(), y);
+            painter.drawLine(0, y, m_pageSize.width(), y); // 从页面左边到右边
         }
     }
 
@@ -289,16 +330,20 @@ void DrawingArea::paintEvent(QPaintEvent *event)
 
 void DrawingArea::mousePressEvent(QMouseEvent *event)
 {
+    // 转换屏幕坐标到文档坐标
+    QPoint docPos = screenToDoc(event->pos());
+
     if (selectedIndex != -1)
     {
         // 检查是否点击了锚点
         const auto &handles = shapes[selectedIndex]->getHandles();
         for (size_t i = 0; i < handles.size(); ++i)
         {
-            if (handles[i].rect.contains(event->pos()))
+            // 直接在文档坐标系中检查
+            if (handles[i].rect.contains(docPos))
             {
                 shapes[selectedIndex]->setSelectedHandleIndex(i);
-                lastMousePos = event->pos();
+                lastMousePos = docPos; // 保存文档坐标
                 dragging = true;
                 update();
                 return;
@@ -306,23 +351,41 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
         }
     }
 
+    int oldSelectedIndex = selectedIndex;
     selectedIndex = -1;
     for (int i = shapes.size() - 1; i >= 0; --i)
     {
-        if (shapes[i]->boundingRect().contains(event->pos()))
+        // 直接在文档坐标系中检查
+        if (shapes[i]->contains(docPos))
         {
             selectedIndex = i;
-            lastMousePos = event->pos();
+            lastMousePos = docPos; // 保存文档坐标
             dragging = true;
             update();
+
+            // 发出选中图形信号
+            if (oldSelectedIndex != selectedIndex)
+            {
+                emit shapeSelected(shapes[selectedIndex].get());
+            }
             return;
         }
     }
+
+    // 如果之前有选中的图形，现在取消了，发出信号
+    if (oldSelectedIndex != -1)
+    {
+        emit selectionCleared();
+    }
+
     update();
 }
 
 void DrawingArea::mouseMoveEvent(QMouseEvent *event)
 {
+    // 转换屏幕坐标到文档坐标
+    QPoint docPos = screenToDoc(event->pos());
+
     if (dragging && selectedIndex != -1)
     {
         if (shapes[selectedIndex]->isHandleSelected())
@@ -332,9 +395,9 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
                 int handleIndex = arrow->getSelectedHandleIndex();
                 if (handleIndex != -1)
                 {
-                    QPoint mousePos = event->pos();
+                    QPoint mousePos = docPos; // 使用文档坐标
                     QPoint otherPos = (handleIndex == 0) ? arrow->getLine().p2() : arrow->getLine().p1();
-                    const int snapDistance = 10;
+                    const int snapDistance = 10 / m_zoomFactor; // 缩放调整吸附距离
                     bool foundSnap = false;
                     QPoint snapTarget;
 
@@ -387,20 +450,21 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
             else
             {
                 // 处理非箭头图形的缩放
-                QPoint delta = event->pos() - lastMousePos;
-                shapes[selectedIndex]->handleAnchorInteraction(event->pos(), lastMousePos);
+                // 所有操作都在文档坐标系中进行
+                QPoint delta = docPos - lastMousePos; // 使用文档坐标计算偏移
+                shapes[selectedIndex]->handleAnchorInteraction(docPos, lastMousePos);
                 updateConnectedArrows(selectedIndex, delta);
-                lastMousePos = event->pos();
+                lastMousePos = docPos; // 更新为当前文档坐标
                 update();
             }
         }
         else
         {
             // 图形整体拖动
-            QPoint delta = event->pos() - lastMousePos;
+            QPoint delta = docPos - lastMousePos; // 使用文档坐标计算偏移
             shapes[selectedIndex]->moveBy(delta);
             updateConnectedArrows(selectedIndex, delta);
-            lastMousePos = event->pos();
+            lastMousePos = docPos; // 更新为当前文档坐标
             update();
         }
     }
@@ -408,6 +472,9 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
 
 void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
 {
+    // 转换屏幕坐标到文档坐标
+    QPoint docPos = screenToDoc(event->pos());
+
     if (selectedIndex != -1)
     {
         if (auto *arrow = dynamic_cast<ShapeArrow *>(shapes[selectedIndex].get()))
@@ -432,10 +499,14 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
 
 void DrawingArea::mouseDoubleClickEvent(QMouseEvent *event)
 {
+    // 转换屏幕坐标到文档坐标
+    QPoint docPos = screenToDoc(event->pos());
+
     // 查找点击的图形
     for (int i = shapes.size() - 1; i >= 0; --i)
     {
-        if (shapes[i]->contains(event->pos()))
+        // 直接在文档坐标系中检查
+        if (shapes[i]->contains(docPos))
         {
             // 检查图形是否支持文本编辑
             if (shapes[i]->isTextEditable())
@@ -465,8 +536,10 @@ void DrawingArea::startTextEditing(int shapeIndex)
         m_textEdit = new QLineEdit(this);
     }
 
-    // 设置文本编辑控件的基本属性
-    m_textEdit->setGeometry(shapes[shapeIndex]->boundingRect().adjusted(5, 5, -5, -5));
+    // 设置文本编辑控件的基本属性，考虑缩放因子
+    QRect docRect = shapes[shapeIndex]->boundingRect().adjusted(5, 5, -5, -5);
+    QRect screenRect = docToScreen(docRect);
+    m_textEdit->setGeometry(screenRect);
     if (auto *lineEdit = qobject_cast<QLineEdit *>(m_textEdit))
     {
         lineEdit->setText(shapes[shapeIndex]->getText());
@@ -708,6 +781,7 @@ void DrawingArea::deleteSelectedShape()
         // 删除选中的图形
         shapes.erase(shapes.begin() + selectedIndex);
         selectedIndex = -1;
+        emit selectionCleared();
         update();
     }
 }
@@ -784,4 +858,128 @@ void DrawingArea::setSelectedShapeLineWidth(int width)
         shapes[selectedIndex]->setLineWidth(width);
         update();
     }
+}
+
+// 设置缩放因子
+void DrawingArea::setZoomFactor(double factor)
+{
+    // 限制缩放范围，防止太小或太大
+    if (factor < 0.1)
+        factor = 0.1;
+    else if (factor > 5.0)
+        factor = 5.0;
+
+    if (m_zoomFactor != factor)
+    {
+        m_zoomFactor = factor;
+
+        // 调整窗口大小以适应缩放后的页面，添加一些边距
+        QSize newSize = docToScreen(m_pageSize);
+        // 添加边距，使缩放后的页面周围有一些空间
+        int margin = 40; // 40像素的边距
+        newSize.setWidth(newSize.width() + margin * 2);
+        newSize.setHeight(newSize.height() + margin * 2);
+        setMinimumSize(newSize);
+        resize(newSize);
+
+        // 需要更新内容
+        update();
+
+        // 如果有文本编辑框打开，需要调整其位置和大小
+        if (m_textEdit && selectedIndex >= 0 && selectedIndex < static_cast<int>(shapes.size()))
+        {
+            QRect rect = docToScreen(shapes[selectedIndex]->getRect());
+            m_textEdit->setGeometry(rect);
+        }
+
+        // 发出缩放因子变化信号
+        emit zoomFactorChanged(m_zoomFactor);
+    }
+}
+
+// 放大
+void DrawingArea::zoomIn()
+{
+    setZoomFactor(m_zoomFactor * 1.2); // 每次放大20%
+}
+
+// 缩小
+void DrawingArea::zoomOut()
+{
+    setZoomFactor(m_zoomFactor / 1.2); // 每次缩小约17%
+}
+
+// 重置缩放
+void DrawingArea::resetZoom()
+{
+    setZoomFactor(1.0);
+}
+
+// 滚轮事件处理（支持Ctrl+滚轮缩放）
+void DrawingArea::wheelEvent(QWheelEvent *event)
+{
+    // 检查是否按下了Ctrl键
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        // 获取滚轮的垂直角度增量
+        int delta = event->angleDelta().y();
+
+        if (delta > 0)
+        {
+            // 向上滚动，放大
+            zoomIn();
+        }
+        else if (delta < 0)
+        {
+            // 向下滚动，缩小
+            zoomOut();
+        }
+
+        event->accept(); // 标记事件已处理
+    }
+    else
+    {
+        // 如果没有按Ctrl，则交给基类处理（可能是滚动操作）
+        QWidget::wheelEvent(event);
+    }
+}
+
+// 屏幕坐标转文档坐标
+QPoint DrawingArea::screenToDoc(const QPoint &pos) const
+{
+    return QPoint(pos.x() / m_zoomFactor, pos.y() / m_zoomFactor);
+}
+
+// 文档坐标转屏幕坐标
+QPoint DrawingArea::docToScreen(const QPoint &pos) const
+{
+    return QPoint(pos.x() * m_zoomFactor, pos.y() * m_zoomFactor);
+}
+
+// 屏幕矩形转文档矩形
+QRect DrawingArea::screenToDoc(const QRect &rect) const
+{
+    return QRect(
+        rect.x() / m_zoomFactor,
+        rect.y() / m_zoomFactor,
+        rect.width() / m_zoomFactor,
+        rect.height() / m_zoomFactor);
+}
+
+// 文档矩形转屏幕矩形
+QRect DrawingArea::docToScreen(const QRect &rect) const
+{
+    return QRect(
+        rect.x() * m_zoomFactor,
+        rect.y() * m_zoomFactor,
+        rect.width() * m_zoomFactor,
+        rect.height() * m_zoomFactor);
+}
+
+// 文档大小转屏幕大小
+QSize DrawingArea::docToScreen(const QSize &size) const
+{
+    return QSize(
+        size.width() * m_zoomFactor,
+        size.height() * m_zoomFactor);
 }

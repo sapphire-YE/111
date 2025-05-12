@@ -1,5 +1,6 @@
 <RCC>
 <qresource prefix="/">
 <file>image/peiqi.png</file>
+<file>image/hexArrow.png</file>
 </qresource>
 </RCC>

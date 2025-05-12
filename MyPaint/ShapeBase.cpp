@@ -9,6 +9,9 @@ void ShapeBase::paint(QPainter *painter, bool selected)
   // 保存当前变换状态
   painter->save();
 
+  // 设置不透明度
+  painter->setOpacity(m_opacity);
+
   // 设置旋转中心点和旋转角度
   QRect rect = boundingRect();
   QPoint center = rect.center();
@@ -22,10 +25,17 @@ void ShapeBase::paint(QPainter *painter, bool selected)
   // 2. 如果图形有文本，绘制文本
   if (!m_text.isEmpty())
   {
-    painter->setPen(QPen(Qt::black));                       // 设置黑色文本
-    painter->setBrush(Qt::NoBrush);                         // 文本不需要填充
+    painter->setPen(QPen(m_textColor.isValid() ? m_textColor : Qt::black)); // 使用文本颜色
+    painter->setBrush(Qt::NoBrush);                                         // 文本不需要填充
+
+    // 设置字体
+    if (m_font.family() != "")
+    {
+      painter->setFont(m_font);
+    }
+
     QRect textRect = boundingRect().adjusted(5, 5, -5, -5); // 留出边距
-    painter->drawText(textRect, Qt::AlignCenter, m_text);
+    painter->drawText(textRect, m_textAlignment, m_text);
   }
 
   // 恢复变换状态

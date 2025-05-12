@@ -16,6 +16,8 @@ public:
   void initShapeItems();
   // 获取当前选中的图形类型
   QString getCurrentShapeType() const;
+  // 启用工具提示
+  void enableToolTips();
 
 protected:
   // 重写拖拽事件

@@ -88,6 +88,25 @@ public:
     obj["width"] = rect.width();
     obj["height"] = rect.height();
     obj["text"] = m_text;
+    obj["lineColor"] = m_lineColor.name();
+    obj["lineWidth"] = m_lineWidth;
+    obj["lineType"] = static_cast<int>(m_lineType); // 保存线条类型
+    obj["fillColor"] = m_fillColor.name();
+    obj["opacity"] = m_opacity;
+
+    // 保存字体和文本相关属性
+    if (!m_text.isEmpty())
+    {
+      obj["textColor"] = m_textColor.name();
+      obj["fontFamily"] = m_font.family();
+      obj["fontSize"] = m_font.pointSize();
+      obj["textAlignment"] = m_textAlignment;
+      obj["fontBold"] = m_font.bold();
+      obj["fontItalic"] = m_font.italic();
+      obj["fontUnderline"] = m_font.underline();
+      obj["fontStrikeOut"] = m_font.strikeOut();
+    }
+
     return obj;
   }
 
@@ -111,13 +130,154 @@ public:
     {
       m_lineWidth = obj["lineWidth"].toInt();
     }
+    if (obj.contains("lineType"))
+    {
+      m_lineType = static_cast<LineType>(obj["lineType"].toInt());
+    }
+    if (obj.contains("fillColor"))
+    {
+      m_fillColor = QColor(obj["fillColor"].toString());
+    }
+
+    if (obj.contains("opacity"))
+    {
+      m_opacity = obj["opacity"].toDouble();
+    }
+
+    // 加载字体和文本相关属性
+    if (obj.contains("textColor"))
+    {
+      m_textColor = QColor(obj["textColor"].toString());
+    }
+
+    QFont font = m_font;
+    bool fontChanged = false;
+
+    if (obj.contains("fontFamily"))
+    {
+      font.setFamily(obj["fontFamily"].toString());
+      fontChanged = true;
+    }
+
+    if (obj.contains("fontSize"))
+    {
+      font.setPointSize(obj["fontSize"].toInt());
+      fontChanged = true;
+    }
+
+    if (obj.contains("fontBold"))
+    {
+      font.setBold(obj["fontBold"].toBool());
+      fontChanged = true;
+    }
+
+    if (obj.contains("fontItalic"))
+    {
+      font.setItalic(obj["fontItalic"].toBool());
+      fontChanged = true;
+    }
+
+    if (obj.contains("fontUnderline"))
+    {
+      font.setUnderline(obj["fontUnderline"].toBool());
+      fontChanged = true;
+    }
+
+    if (obj.contains("fontStrikeOut"))
+    {
+      font.setStrikeOut(obj["fontStrikeOut"].toBool());
+      fontChanged = true;
+    }
+
+    if (fontChanged)
+    {
+      m_font = font;
+    }
+
+    if (obj.contains("textAlignment"))
+    {
+      m_textAlignment = obj["textAlignment"].toInt();
+    }
   }
+
+  // 线条类型枚举
+  enum LineType
+  {
+    SolidLine = 0, // 实线
+    DashLine = 1,  // 虚线
+    DotLine = 2    // 点线
+  };
 
   // 线条样式相关方法
   virtual void setLineColor(const QColor &color) { m_lineColor = color; }
   virtual QColor getLineColor() const { return m_lineColor; }
   virtual void setLineWidth(int width) { m_lineWidth = width; }
   virtual int getLineWidth() const { return m_lineWidth; }
+  virtual void setLineType(LineType type) { m_lineType = type; }
+  virtual LineType getLineType() const { return m_lineType; }
+
+  // 填充颜色相关方法
+  virtual void setFillColor(const QColor &color) { m_fillColor = color; }
+  virtual QColor getFillColor() const { return m_fillColor; }
+
+  // 不透明度相关方法
+  virtual void setOpacity(double opacity) { m_opacity = opacity; }
+  virtual double getOpacity() const { return m_opacity; }
+
+  // 文本样式相关方法
+  virtual void setTextColor(const QColor &color) { m_textColor = color; }
+  virtual QColor getTextColor() const { return m_textColor; }
+  virtual void setFont(const QFont &font) { m_font = font; }
+  virtual QFont getFont() const { return m_font; }
+  virtual void setFontSize(int size)
+  {
+    QFont font = m_font;
+    font.setPointSize(size);
+    m_font = font;
+  }
+  virtual int getFontSize() const { return m_font.pointSize(); }
+  virtual void setFontFamily(const QString &family)
+  {
+    QFont font = m_font;
+    font.setFamily(family);
+    m_font = font;
+  }
+  virtual QString getFontFamily() const { return m_font.family(); }
+  virtual void setTextAlignment(int alignment) { m_textAlignment = alignment; }
+  virtual int getTextAlignment() const { return m_textAlignment; }
+
+  // 字体样式相关方法
+  virtual void setFontBold(bool bold)
+  {
+    QFont font = m_font;
+    font.setBold(bold);
+    m_font = font;
+  }
+  virtual bool isFontBold() const { return m_font.bold(); }
+
+  virtual void setFontItalic(bool italic)
+  {
+    QFont font = m_font;
+    font.setItalic(italic);
+    m_font = font;
+  }
+  virtual bool isFontItalic() const { return m_font.italic(); }
+
+  virtual void setFontUnderline(bool underline)
+  {
+    QFont font = m_font;
+    font.setUnderline(underline);
+    m_font = font;
+  }
+  virtual bool isFontUnderline() const { return m_font.underline(); }
+
+  virtual void setFontStrikeOut(bool strikeOut)
+  {
+    QFont font = m_font;
+    font.setStrikeOut(strikeOut);
+    m_font = font;
+  }
+  virtual bool isFontStrikeOut() const { return m_font.strikeOut(); }
 
 protected:
   // 计算新的矩形区域
@@ -127,9 +287,15 @@ protected:
   // 文本相关属性
   QString m_text;
   bool m_isEditing = false;
-  double m_rotation = 0.0;        // 旋转角度（弧度）
-  QColor m_lineColor = Qt::black; // 线条颜色
-  int m_lineWidth = 1;            // 线条粗细
+  double m_rotation = 0.0;               // 旋转角度（弧度）
+  QColor m_lineColor = Qt::black;        // 线条颜色
+  QColor m_fillColor = Qt::white;        // 填充颜色
+  QColor m_textColor = Qt::black;        // 文本颜色
+  QFont m_font;                          // 字体
+  int m_textAlignment = Qt::AlignCenter; // 文本对齐方式
+  int m_lineWidth = 1;                   // 线条粗细
+  LineType m_lineType = SolidLine;       // 线条类型，默认为实线
+  double m_opacity = 1.0;                // 不透明度（0.0-1.0）
 
 private:
   int m_selectedHandleIndex = -1; // 当前选中的锚点索引

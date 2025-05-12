@@ -11,8 +11,26 @@ void ShapeArrow::paintShape(QPainter *painter)
   if (!painter)
     return;
 
+  // 根据线条类型设置不同的画笔样式
+  Qt::PenStyle penStyle = Qt::SolidLine;
+  switch (m_lineType)
+  {
+  case LineType::SolidLine:
+    penStyle = Qt::SolidLine;
+    break;
+  case LineType::DashLine:
+    penStyle = Qt::DashLine;
+    break;
+  case LineType::DotLine:
+    penStyle = Qt::DotLine;
+    break;
+  }
+
   // 设置画笔属性
-  painter->setPen(QPen(m_lineColor, m_lineWidth));
+  QPen pen(m_lineColor, m_lineWidth);
+  pen.setStyle(penStyle);
+  painter->setPen(pen);
+  painter->setBrush(m_fillColor);
 
   // 绘制箭头线
   painter->drawLine(m_line);

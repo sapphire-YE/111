@@ -23,6 +23,15 @@
       <property name="currentIndex">
        <number>0</number>
       </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="documentMode">
+       <bool>true</bool>
+      </property>
+      <property name="tabsClosable">
+       <bool>false</bool>
+      </property>
       <widget class="QWidget" name="tabStart">
        <attribute name="title">
         <string>Start</string>
@@ -49,11 +58,11 @@
        <layout class="QVBoxLayout" name="verticalLayoutArrange">
         <item>
          <widget class="QToolBar" name="arrangeToolBar">
-          <addaction name="actionAlignLeft"/>
+          <!-- <addaction name="actionAlignLeft"/>
           <addaction name="actionAlignCenter"/>
           <addaction name="actionAlignRight"/>
           <addaction name="actionAlignTop"/>
-          <addaction name="actionAlignBottom"/>
+          <addaction name="actionAlignBottom"/> -->
          </widget>
         </item>
        </layout>
@@ -203,7 +212,7 @@ QWidget#drawingArea {
     <string>Redo</string>
    </property>
   </action>
-  <action name="actionAlignLeft">
+  <!-- <action name="actionAlignLeft">
    <property name="text">
     <string>Align Left</string>
    </property>
@@ -227,7 +236,7 @@ QWidget#drawingArea {
    <property name="text">
     <string>Align Bottom</string>
    </property>
-  </action>
+  </action> -->
   <action name="actionA3">
    <property name="text">
     <string>A3 Size (1500px*2100px)</string>
