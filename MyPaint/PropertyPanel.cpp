@@ -6,7 +6,9 @@
 #include "ShapePolygon.h"
 #include <QScrollArea>
 #include <QLabel>
-#include <cmath>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 PropertyPanel::PropertyPanel(QWidget *parent)
     : QWidget(parent), m_drawingArea(nullptr), m_currentShape(nullptr)

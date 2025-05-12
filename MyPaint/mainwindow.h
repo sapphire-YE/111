@@ -80,7 +80,7 @@ protected:
     QAction *m_zoomInAction;         // 放大动作
     QAction *m_zoomOutAction;        // 缩小动作
     QAction *m_zoomResetAction;      // 重置缩放动作
-    QAction *m_zoomCustomActions[5]; // 自定义缩放级别动作
+    QAction *m_zoomCustomActions[6]; // 自定义缩放级别动作
 };
 
 #endif // MAINWINDOW_H

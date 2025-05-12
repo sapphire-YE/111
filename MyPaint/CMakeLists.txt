@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
 	add_compile_options(/Zc:__cplusplus)
+	add_compile_options(/source-charset:utf-8)
 endif()
 
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
