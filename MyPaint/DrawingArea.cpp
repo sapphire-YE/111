@@ -754,10 +754,14 @@ void DrawingArea::pasteShape()
     if (m_clipboardShape)
     {
         std::unique_ptr<ShapeBase> newShape = m_clipboardShape->clone();
-        // 将新图形放在鼠标右键点击的位置
+        // 将新图形放在鼠标当前位置
+        QPoint pos = mapFromGlobal(QCursor::pos());
         QRect rect = newShape->getRect();
-        QPoint offset = mapFromGlobal(QCursor::pos()) - rect.center();
-        rect.moveCenter(offset);
+        int width = rect.width();
+        int height = rect.height();
+        rect.setTopLeft(pos);
+        rect.setWidth(width);
+        rect.setHeight(height);
         newShape->setRect(rect);
 
         shapes.push_back(std::move(newShape));
