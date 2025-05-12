@@ -11,6 +11,8 @@ public:
   void resize(const QRect &newRect) override;
   QRect boundingRect() const override;
   std::vector<Handle> getArrowAnchors() const override;
+  std::vector<Handle> getHandles() const override;
+  int mapArrowHandleToAnchor(int arrowHandleIndex) const override;
   void rotate(double angle) override;                // 实现旋转方法
   std::unique_ptr<ShapeBase> clone() const override; // 克隆方法
 

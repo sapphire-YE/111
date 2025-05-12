@@ -48,10 +48,25 @@ void ShapeBase::paint(QPainter *painter, bool selected)
   // 3. 如果被选中，绘制选中状态
   if (selected)
   {
-    // 绘制虚线框
+    // 绘制虚线框，考虑旋转
+    QRect rect = boundingRect();
+    QPoint center = rect.center();
+    
+    // 保存绘图状态
+    painter->save();
+    
+    // 设置旋转
+    painter->translate(center);
+    painter->rotate(m_rotation * 180.0 / M_PI); // 转换为角度
+    painter->translate(-center);
+    
+    // 绘制旋转后的虚线框
     painter->setPen(QPen(Qt::blue, 1, Qt::DashLine));
     painter->setBrush(Qt::NoBrush);
-    painter->drawRect(boundingRect());
+    painter->drawRect(rect);
+    
+    // 恢复绘图状态
+    painter->restore();
 
     // 绘制所有锚点
     for (const auto &handle : getHandles())
@@ -182,54 +197,136 @@ std::vector<ShapeBase::Handle> ShapeBase::getHandles() const
   int w = rect.width(), h = rect.height();
   int x = rect.left(), y = rect.top();
   int size = 8; // 锚点大小
+  QPoint center = rect.center();
 
-  // 八个缩放锚点
-  handles.push_back(
-      {QRect(x - 4, y - 4, size, size), Handle::Scale, 0}); // 左上
-  handles.push_back(
-      {QRect(x + w / 2 - 4, y - 4, size, size), Handle::Scale, 1}); // 上中
-  handles.push_back(
-      {QRect(x + w - 4, y - 4, size, size), Handle::Scale, 2}); // 右上
-  handles.push_back(
-      {QRect(x - 4, y + h / 2 - 4, size, size), Handle::Scale, 3}); // 左中
-  handles.push_back(
-      {QRect(x + w - 4, y + h / 2 - 4, size, size), Handle::Scale, 4}); // 右中
-  handles.push_back(
-      {QRect(x - 4, y + h - 4, size, size), Handle::Scale, 5}); // 左下
-  handles.push_back(
-      {QRect(x + w / 2 - 4, y + h - 4, size, size), Handle::Scale, 6}); // 下中
-  handles.push_back(
-      {QRect(x + w - 4, y + h - 4, size, size), Handle::Scale, 7}); // 右下
+  // 如果图形有旋转，则需要计算旋转后的锚点位置
+  if (m_rotation != 0.0) {
+    // 计算旋转后的锚点位置
+    auto rotatePoint = [&](QPoint pt) {
+      QPoint localPt = pt - center;
+      double cosAngle = cos(m_rotation);
+      double sinAngle = sin(m_rotation);
+      QPoint rotatedPt(
+        localPt.x() * cosAngle - localPt.y() * sinAngle,
+        localPt.x() * sinAngle + localPt.y() * cosAngle
+      );
+      return rotatedPt + center;
+    };
 
-  // 添加旋转锚点
+    // 计算各个锚点的位置
+    QPoint topLeft = rotatePoint(QPoint(x, y));
+    QPoint topMiddle = rotatePoint(QPoint(x + w / 2, y));
+    QPoint topRight = rotatePoint(QPoint(x + w, y));
+    QPoint leftMiddle = rotatePoint(QPoint(x, y + h / 2));
+    QPoint rightMiddle = rotatePoint(QPoint(x + w, y + h / 2));
+    QPoint bottomLeft = rotatePoint(QPoint(x, y + h));
+    QPoint bottomMiddle = rotatePoint(QPoint(x + w / 2, y + h));
+    QPoint bottomRight = rotatePoint(QPoint(x + w, y + h));
+
+    // 添加旋转后的锚点
+    handles.push_back({QRect(topLeft.x() - 4, topLeft.y() - 4, size, size), Handle::Scale, 0}); // 左上
+    handles.push_back({QRect(topMiddle.x() - 4, topMiddle.y() - 4, size, size), Handle::Scale, 1}); // 上中
+    handles.push_back({QRect(topRight.x() - 4, topRight.y() - 4, size, size), Handle::Scale, 2}); // 右上
+    handles.push_back({QRect(leftMiddle.x() - 4, leftMiddle.y() - 4, size, size), Handle::Scale, 3}); // 左中
+    handles.push_back({QRect(rightMiddle.x() - 4, rightMiddle.y() - 4, size, size), Handle::Scale, 4}); // 右中
+    handles.push_back({QRect(bottomLeft.x() - 4, bottomLeft.y() - 4, size, size), Handle::Scale, 5}); // 左下
+    handles.push_back({QRect(bottomMiddle.x() - 4, bottomMiddle.y() - 4, size, size), Handle::Scale, 6}); // 下中
+    handles.push_back({QRect(bottomRight.x() - 4, bottomRight.y() - 4, size, size), Handle::Scale, 7}); // 右下
+  } else {
+    // 无旋转时的原始实现
+    handles.push_back({QRect(x - 4, y - 4, size, size), Handle::Scale, 0}); // 左上
+    handles.push_back({QRect(x + w / 2 - 4, y - 4, size, size), Handle::Scale, 1}); // 上中
+    handles.push_back({QRect(x + w - 4, y - 4, size, size), Handle::Scale, 2}); // 右上
+    handles.push_back({QRect(x - 4, y + h / 2 - 4, size, size), Handle::Scale, 3}); // 左中
+    handles.push_back({QRect(x + w - 4, y + h / 2 - 4, size, size), Handle::Scale, 4}); // 右中
+    handles.push_back({QRect(x - 4, y + h - 4, size, size), Handle::Scale, 5}); // 左下
+    handles.push_back({QRect(x + w / 2 - 4, y + h - 4, size, size), Handle::Scale, 6}); // 下中
+    handles.push_back({QRect(x + w - 4, y + h - 4, size, size), Handle::Scale, 7}); // 右下
+  }
+
+  // 添加旋转锚点 - 旋转锚点始终在上方
   int rotateSize = 12;   // 旋转锚点稍大一些
   int rotateOffset = 30; // 距离边界的距离
-  handles.push_back(
+
+  if (m_rotation != 0.0) {
+    // 计算旋转后的旋转锚点位置
+    QPoint rotateCenter = center;
+    QPoint rotateHandlePos(center.x(), center.y() - h/2 - rotateOffset);
+    
+    // 将旋转锚点相对于中心旋转
+    QPoint localPt = rotateHandlePos - center;
+    double cosAngle = cos(m_rotation);
+    double sinAngle = sin(m_rotation);
+    QPoint rotatedPt(
+      localPt.x() * cosAngle - localPt.y() * sinAngle,
+      localPt.x() * sinAngle + localPt.y() * cosAngle
+    );
+    QPoint finalRotatePos = rotatedPt + center;
+    
+    handles.push_back({QRect(finalRotatePos.x() - rotateSize / 2, 
+                             finalRotatePos.y() - rotateSize / 2,
+                             rotateSize, rotateSize),
+                      Handle::Rotate, 8});
+  } else {
+    handles.push_back(
       {QRect(x + w / 2 - rotateSize / 2, y - rotateOffset - rotateSize / 2,
              rotateSize, rotateSize),
        Handle::Rotate, 8});
+  }
 
   // 只在需要时添加加号锚点
   if (needPlusHandles())
   {
     int arrowSize = 24; // 加号锚点区域大小
-    int offset = 23;    // 距离边界的距离（加大）
-    // 上
-    handles.push_back(
-        {QRect(x + w / 2 - arrowSize / 2, y - offset, arrowSize, arrowSize),
-         Handle::Arrow, 9});
-    // 下
-    handles.push_back({QRect(x + w / 2 - arrowSize / 2,
-                             y + h + offset - arrowSize, arrowSize, arrowSize),
-                       Handle::Arrow, 10});
-    // 左
-    handles.push_back(
-        {QRect(x - offset, y + h / 2 - arrowSize / 2, arrowSize, arrowSize),
-         Handle::Arrow, 11});
-    // 右
-    handles.push_back({QRect(x + w + offset - arrowSize,
-                             y + h / 2 - arrowSize / 2, arrowSize, arrowSize),
-                       Handle::Arrow, 12});
+    int offset = 30;    // 距离边界的距离（更大）
+    
+    if (m_rotation != 0.0) {
+      // 计算旋转后的加号锚点位置
+      auto rotatePoint = [&](QPoint pt) {
+        QPoint localPt = pt - center;
+        double cosAngle = cos(m_rotation);
+        double sinAngle = sin(m_rotation);
+        QPoint rotatedPt(
+          localPt.x() * cosAngle - localPt.y() * sinAngle,
+          localPt.x() * sinAngle + localPt.y() * cosAngle
+        );
+        return rotatedPt + center;
+      };
+      
+      // 计算各个加号锚点的旋转后位置
+      QPoint topArrow = rotatePoint(QPoint(x + w / 2, y - offset + arrowSize/2));
+      QPoint bottomArrow = rotatePoint(QPoint(x + w / 2, y + h + offset - arrowSize/2));
+      QPoint leftArrow = rotatePoint(QPoint(x - offset + arrowSize/2, y + h / 2));
+      QPoint rightArrow = rotatePoint(QPoint(x + w + offset - arrowSize/2, y + h / 2));
+      
+      // 添加旋转后的加号锚点
+      handles.push_back({QRect(topArrow.x() - arrowSize/2, topArrow.y() - arrowSize/2, 
+                              arrowSize, arrowSize), Handle::Arrow, 9}); // 上
+      handles.push_back({QRect(bottomArrow.x() - arrowSize/2, bottomArrow.y() - arrowSize/2, 
+                              arrowSize, arrowSize), Handle::Arrow, 10}); // 下
+      handles.push_back({QRect(leftArrow.x() - arrowSize/2, leftArrow.y() - arrowSize/2, 
+                              arrowSize, arrowSize), Handle::Arrow, 11}); // 左
+      handles.push_back({QRect(rightArrow.x() - arrowSize/2, rightArrow.y() - arrowSize/2, 
+                              arrowSize, arrowSize), Handle::Arrow, 12}); // 右
+    } else {
+      // 无旋转时的原始实现
+      // 上
+      handles.push_back(
+          {QRect(x + w / 2 - arrowSize / 2, y - offset, arrowSize, arrowSize),
+           Handle::Arrow, 9});
+      // 下
+      handles.push_back({QRect(x + w / 2 - arrowSize / 2,
+                               y + h + offset - arrowSize, arrowSize, arrowSize),
+                         Handle::Arrow, 10});
+      // 左
+      handles.push_back(
+          {QRect(x - offset, y + h / 2 - arrowSize / 2, arrowSize, arrowSize),
+           Handle::Arrow, 11});
+      // 右
+      handles.push_back({QRect(x + w + offset - arrowSize,
+                               y + h / 2 - arrowSize / 2, arrowSize, arrowSize),
+                         Handle::Arrow, 12});
+    }
   }
   return handles;
 }

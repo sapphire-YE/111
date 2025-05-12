@@ -56,6 +56,12 @@ public:
   // 获取箭头锚点，默认返回空
   virtual std::vector<Handle> getArrowAnchors() const { return {}; }
 
+  // 将加号锚点索引映射到对应的ArrowAnchor锚点索引
+  virtual int mapArrowHandleToAnchor(int arrowHandleIndex) const {
+    // 默认实现：加号锚点的direction值从9开始，对应ArrowAnchor从0开始
+    return arrowHandleIndex - 9;
+  }
+
   // 旋转相关方法
   virtual double getRotation() const { return m_rotation; }      // 获取当前旋转角度
   virtual void setRotation(double angle) { m_rotation = angle; } // 设置旋转角度

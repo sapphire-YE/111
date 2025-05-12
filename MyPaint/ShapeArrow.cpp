@@ -181,8 +181,13 @@ void ShapeArrow::rotate(double angle)
 std::unique_ptr<ShapeBase> ShapeArrow::clone() const
 {
   auto clone = std::make_unique<ShapeArrow>(m_line);
+  clone->setText(m_text);
   clone->setRotation(m_rotation);
   clone->setLineColor(m_lineColor);
   clone->setLineWidth(m_lineWidth);
+  clone->setFillColor(m_fillColor);
+  clone->setLineType(m_lineType);
+  clone->setOpacity(m_opacity);
+  clone->setTextColor(m_textColor);
   return clone;
 }

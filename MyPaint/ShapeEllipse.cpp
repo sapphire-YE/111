@@ -77,18 +77,51 @@ std::vector<ShapeBase::Handle> ShapeEllipse::getArrowAnchors() const
   int w = rect.width(), h = rect.height();
   int x = rect.left(), y = rect.top();
   int size = 8;
-  // 上
-  anchors.push_back({QRect(x + w / 2 - size / 2, y - size / 2, size, size),
-                     Handle::ArrowAnchor, 0});
-  // 下
-  anchors.push_back({QRect(x + w / 2 - size / 2, y + h - size / 2, size, size),
-                     Handle::ArrowAnchor, 1});
-  // 左
-  anchors.push_back({QRect(x - size / 2, y + h / 2 - size / 2, size, size),
-                     Handle::ArrowAnchor, 2});
-  // 右
-  anchors.push_back({QRect(x + w - size / 2, y + h / 2 - size / 2, size, size),
-                     Handle::ArrowAnchor, 3});
+  QPoint center = rect.center();
+
+  if (m_rotation != 0.0) {
+    // 计算旋转后的锚点位置
+    auto rotatePoint = [&](QPoint pt) {
+      QPoint localPt = pt - center;
+      double cosAngle = cos(m_rotation);
+      double sinAngle = sin(m_rotation);
+      QPoint rotatedPt(
+        localPt.x() * cosAngle - localPt.y() * sinAngle,
+        localPt.x() * sinAngle + localPt.y() * cosAngle
+      );
+      return rotatedPt + center;
+    };
+
+    // 计算各个箭头锚点的旋转后位置
+    QPoint topMiddle = rotatePoint(QPoint(x + w / 2, y));
+    QPoint bottomMiddle = rotatePoint(QPoint(x + w / 2, y + h));
+    QPoint leftMiddle = rotatePoint(QPoint(x, y + h / 2));
+    QPoint rightMiddle = rotatePoint(QPoint(x + w, y + h / 2));
+
+    // 添加旋转后的箭头锚点
+    anchors.push_back({QRect(topMiddle.x() - size / 2, topMiddle.y() - size / 2, size, size),
+                       Handle::ArrowAnchor, 0}); // 上
+    anchors.push_back({QRect(bottomMiddle.x() - size / 2, bottomMiddle.y() - size / 2, size, size),
+                       Handle::ArrowAnchor, 1}); // 下
+    anchors.push_back({QRect(leftMiddle.x() - size / 2, leftMiddle.y() - size / 2, size, size),
+                       Handle::ArrowAnchor, 2}); // 左
+    anchors.push_back({QRect(rightMiddle.x() - size / 2, rightMiddle.y() - size / 2, size, size),
+                       Handle::ArrowAnchor, 3}); // 右
+  } else {
+    // 无旋转时的原始实现
+    // 上
+    anchors.push_back({QRect(x + w / 2 - size / 2, y - size / 2, size, size),
+                      Handle::ArrowAnchor, 0});
+    // 下
+    anchors.push_back({QRect(x + w / 2 - size / 2, y + h - size / 2, size, size),
+                      Handle::ArrowAnchor, 1});
+    // 左
+    anchors.push_back({QRect(x - size / 2, y + h / 2 - size / 2, size, size),
+                      Handle::ArrowAnchor, 2});
+    // 右
+    anchors.push_back({QRect(x + w - size / 2, y + h / 2 - size / 2, size, size),
+                      Handle::ArrowAnchor, 3});
+  }
   return anchors;
 }
 
@@ -105,5 +138,27 @@ std::unique_ptr<ShapeBase> ShapeEllipse::clone() const
   clone->setRotation(m_rotation);
   clone->setLineColor(m_lineColor);
   clone->setLineWidth(m_lineWidth);
+  clone->setFillColor(m_fillColor);
+  clone->setLineType(m_lineType);
+  clone->setOpacity(m_opacity);
+  clone->setFontFamily(m_font.family());
+  clone->setFontSize(m_font.pointSize());
+  clone->setFontBold(m_font.bold());
+  clone->setFontItalic(m_font.italic());
+  clone->setFontUnderline(m_font.underline());
+  clone->setFontStrikeOut(m_font.strikeOut());
+  clone->setTextColor(m_textColor);
+  clone->setTextAlignment(m_textAlignment);
   return clone;
+}
+
+std::vector<ShapeBase::Handle> ShapeEllipse::getHandles() const {
+  // 直接使用基类的实现，不需要重写
+  return ShapeBase::getHandles();
+}
+
+int ShapeEllipse::mapArrowHandleToAnchor(int arrowHandleIndex) const
+{
+  // 对于椭圆，加号锚点的direction从9开始(上下左右)，对应ArrowAnchor从0开始(上下左右)
+  return arrowHandleIndex - 9;
 }
