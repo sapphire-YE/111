@@ -348,7 +348,7 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
                     // 创建一个新箭头，将其起点设置在对应的ArrowAnchor位置
                     int direction = handles[i].direction;
                     int arrowAnchorIndex = shapes[selectedIndex]->mapArrowHandleToAnchor(direction);
-                    
+
                     if (arrowAnchorIndex >= 0) // 检查索引是否有效
                     {
                         // 获取对应边缘的ArrowAnchor锚点
@@ -356,24 +356,24 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
                         if (!arrowAnchors.empty() && arrowAnchorIndex < arrowAnchors.size())
                         {
                             QPoint anchorPos = arrowAnchors[arrowAnchorIndex].rect.center();
-                            
+
                             // 创建新箭头，起点在ArrowAnchor锚点位置，终点跟随鼠标
                             QLine arrowLine(anchorPos, docPos);
                             std::unique_ptr<ShapeBase> arrow = ShapeFactory::createArrow(arrowLine);
-                            
+
                             // 添加到图形列表并选中
                             shapes.push_back(std::move(arrow));
                             selectedIndex = shapes.size() - 1;
-                            
+
                             // 记录选中箭头的终点锚点并开始拖动
                             auto *arrowShape = dynamic_cast<ShapeArrow *>(shapes[selectedIndex].get());
                             if (arrowShape)
                             {
                                 arrowShape->setSelectedHandleIndex(1); // 选中终点锚点
-                                
+
                                 // 记录ArrowAnchor的信息，等待释放鼠标时创建连接
                                 snappedHandle = {static_cast<int>(selectedIndex - 1), arrowAnchorIndex, anchorPos};
-                                
+
                                 // 创建临时连接关系
                                 ArrowConnection connection;
                                 connection.arrowIndex = selectedIndex;
@@ -382,7 +382,7 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
                                 connection.isStartPoint = true; // 箭头的起点
                                 arrowConnections.push_back(connection);
                             }
-                            
+
                             dragging = true;
                             lastMousePos = docPos;
                             update();
@@ -450,14 +450,17 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
                 {
                     QPoint mousePos = docPos; // 使用文档坐标
                     QPoint otherPos;
-                    
+
                     // 确定另一端点的位置
-                    if (handleIndex == 0) {
+                    if (handleIndex == 0)
+                    {
                         otherPos = arrow->getLine().p2();
-                    } else {
+                    }
+                    else
+                    {
                         otherPos = arrow->getLine().p1();
                     }
-                    
+
                     const int snapDistance = 10 / m_zoomFactor; // 缩放调整吸附距离
                     bool foundSnap = false;
                     QPoint snapTarget;
@@ -491,7 +494,7 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
                         if (foundSnap)
                             break;
                     }
-                    
+
                     if (foundSnap)
                     {
                         // 锁定端点到找到的锚点
@@ -499,7 +502,7 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
                             arrow->setP1(snapTarget);
                         else
                             arrow->setP2(snapTarget);
-                        
+
                         // 更新临时吸附信息
                         snappedHandle = {snapShapeIndex, snapHandleIndex, snapTarget};
                     }
@@ -510,7 +513,7 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
                             arrow->setP1(mousePos);
                         else
                             arrow->setP2(mousePos);
-                        
+
                         // 清除吸附信息
                         snappedHandle = {-1, -1, QPoint()};
                     }
@@ -523,25 +526,27 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
                 // 所有操作都在文档坐标系中进行
                 QPoint delta = docPos - lastMousePos; // 使用文档坐标计算偏移
                 bool isRotating = false;
-                
+
                 // 检查是否在旋转操作
-                if (selectedIndex != -1) {
+                if (selectedIndex != -1)
+                {
                     const auto &handles = shapes[selectedIndex]->getHandles();
                     int selectedHandleIndex = shapes[selectedIndex]->getSelectedHandleIndex();
-                    
-                    if (selectedHandleIndex != -1 && selectedHandleIndex < handles.size() && 
-                        handles[selectedHandleIndex].type == ShapeBase::Handle::Rotate) {
+
+                    if (selectedHandleIndex != -1 && selectedHandleIndex < handles.size() &&
+                        handles[selectedHandleIndex].type == ShapeBase::Handle::Rotate)
+                    {
                         isRotating = true;
                     }
                 }
-                
+
                 // 处理锚点交互（缩放或旋转）
                 shapes[selectedIndex]->handleAnchorInteraction(docPos, lastMousePos);
-                
+
                 // 无论是缩放还是旋转，都需要更新连接的箭头
                 // 对于旋转，delta无意义，因为我们会在updateConnectedArrows中通过锚点直接更新
                 updateConnectedArrows(selectedIndex, delta);
-                
+
                 lastMousePos = docPos; // 更新为当前文档坐标
                 update();
             }
@@ -550,7 +555,7 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
         {
             // 图形整体拖动
             QPoint delta = docPos - lastMousePos; // 使用文档坐标计算偏移
-            
+
             // 检查当前选中的是否是已连接的箭头
             bool isConnectedArrow = false;
             if (auto *arrow = dynamic_cast<ShapeArrow *>(shapes[selectedIndex].get()))
@@ -565,14 +570,14 @@ void DrawingArea::mouseMoveEvent(QMouseEvent *event)
                     }
                 }
             }
-            
+
             // 如果不是已连接的箭头，允许移动
             if (!isConnectedArrow)
             {
                 shapes[selectedIndex]->moveBy(delta);
                 updateConnectedArrows(selectedIndex, delta);
             }
-            
+
             lastMousePos = docPos; // 无论是否移动都更新鼠标位置
             update();
         }
@@ -596,23 +601,27 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                 int bestHandleIndex = -1;
                 QPoint bestPoint;
                 const int snapDistance = 10 / m_zoomFactor; // 缩放调整吸附距离
-                
+
                 // 检查所有图形的锚点
                 for (size_t i = 0; i < shapes.size(); ++i)
                 {
-                    if (i == selectedIndex) continue;
-                    if (dynamic_cast<ShapeArrow *>(shapes[i].get())) continue;
-                    
+                    if (i == selectedIndex)
+                        continue;
+                    if (dynamic_cast<ShapeArrow *>(shapes[i].get()))
+                        continue;
+
                     const auto &arrowAnchors = shapes[i]->getArrowAnchors();
                     for (size_t j = 0; j < arrowAnchors.size(); ++j)
                     {
-                        if (arrowAnchors[j].type != ShapeBase::Handle::ArrowAnchor) continue;
-                        
+                        if (arrowAnchors[j].type != ShapeBase::Handle::ArrowAnchor)
+                            continue;
+
                         QPoint target = arrowAnchors[j].rect.center();
                         // 排除已经连接到的起点
                         QPoint startPoint = arrow->getLine().p1();
-                        if (target == startPoint) continue;
-                        
+                        if (target == startPoint)
+                            continue;
+
                         if ((docPos - target).manhattanLength() <= snapDistance)
                         {
                             bestShapeIndex = i;
@@ -621,21 +630,22 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                             break;
                         }
                     }
-                    if (bestShapeIndex != -1) break;
+                    if (bestShapeIndex != -1)
+                        break;
                 }
-                
+
                 // 找到可连接的目标
                 if (bestShapeIndex != -1)
                 {
                     arrow->setP2(bestPoint);
-                    
+
                     // 记录连接关系
                     ArrowConnection connection;
                     connection.arrowIndex = selectedIndex;
                     connection.shapeIndex = bestShapeIndex;
                     connection.handleIndex = bestHandleIndex;
                     connection.isStartPoint = false; // 箭头的终点
-                    
+
                     // 检查是否已有相同的连接，避免重复添加
                     bool connectionExists = false;
                     for (const auto &conn : arrowConnections)
@@ -646,7 +656,7 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                             break;
                         }
                     }
-                    
+
                     if (!connectionExists)
                     {
                         arrowConnections.push_back(connection);
@@ -654,7 +664,7 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                 }
             }
             // 如果是通过加号锚点创建的箭头，起点连接已在mousePressEvent中建立
-            
+
             // 清除箭头的选中状态
             arrow->clearHandleSelection();
         }
@@ -854,7 +864,7 @@ void DrawingArea::updateConnectedArrows(int shapeIndex, const QPoint &delta)
                 }
             }
         }
-        
+
         // 处理该图形就是箭头自身的情况
         if (connection.arrowIndex == shapeIndex)
         {
@@ -862,78 +872,97 @@ void DrawingArea::updateConnectedArrows(int shapeIndex, const QPoint &delta)
             continue;
         }
     }
-    
+
     // 第二遍检查：检查所有箭头，看是否有连接到当前图形但没有记录在arrowConnections中的情况
     for (size_t i = 0; i < shapes.size(); ++i)
     {
         auto *arrow = dynamic_cast<ShapeArrow *>(shapes[i].get());
-        if (!arrow) continue; // 不是箭头，跳过
-        
-        // 检查该箭头是否已经在arrowConnections中有记录
+        if (!arrow)
+            continue; // 不是箭头，跳过
+
+        // 检查该箭头与当前图形的关系
+        if (i == shapeIndex)
+            continue; // 不处理自身
+
+        // 获取箭头的端点
+        QPoint p1 = arrow->getLine().p1();
+        QPoint p2 = arrow->getLine().p2();
+
+        // 获取当前移动图形的箭头锚点
+        const auto &anchors = shapes[shapeIndex]->getArrowAnchors();
+        const int snapDistance = 5; // 使用小容差值进行检查
+
+        // 检查所有已存在的连接
         bool startPointConnected = false;
         bool endPointConnected = false;
-        
+
         for (const auto &conn : arrowConnections)
         {
             if (conn.arrowIndex == i)
             {
-                if (conn.isStartPoint) startPointConnected = true;
-                else endPointConnected = true;
-            }
-        }
-        
-        // 检查是否有未记录的连接
-        if (!startPointConnected || !endPointConnected)
-        {
-            // 获取当前图形的所有箭头锚点
-            const auto &anchors = shapes[shapeIndex]->getArrowAnchors();
-            QPoint p1 = arrow->getLine().p1();
-            QPoint p2 = arrow->getLine().p2();
-            const int snapDistance = 5; // 使用更小的容差值进行检查
-            
-            // 检查起点是否应该连接到当前图形
-            if (!startPointConnected)
-            {
-                for (size_t j = 0; j < anchors.size(); ++j)
+                if (conn.shapeIndex == shapeIndex) // 只关注与当前移动图形的连接
                 {
-                    QPoint anchorPos = anchors[j].rect.center();
-                    if ((p1 - anchorPos).manhattanLength() <= snapDistance)
+                    if (conn.isStartPoint)
+                        startPointConnected = true;
+                    else
+                        endPointConnected = true;
+
+                    // 更新连接位置
+                    QPoint newAnchorPos = anchors[conn.handleIndex].rect.center();
+                    if (conn.isStartPoint)
                     {
-                        // 创建新的连接记录
-                        ArrowConnection newConn;
-                        newConn.arrowIndex = i;
-                        newConn.shapeIndex = shapeIndex;
-                        newConn.handleIndex = j;
-                        newConn.isStartPoint = true;
-                        arrowConnections.push_back(newConn);
-                        
-                        // 更新箭头起点位置
-                        arrow->setP1(anchorPos);
-                        break;
+                        arrow->setP1(newAnchorPos);
+                    }
+                    else
+                    {
+                        arrow->setP2(newAnchorPos);
                     }
                 }
             }
-            
-            // 检查终点是否应该连接到当前图形
-            if (!endPointConnected)
+        }
+
+        // 如果没有记录的连接，检查是否有未记录的连接点
+        if (!startPointConnected)
+        {
+            for (size_t j = 0; j < anchors.size(); ++j)
             {
-                for (size_t j = 0; j < anchors.size(); ++j)
+                QPoint anchorPos = anchors[j].rect.center();
+                if ((p1 - anchorPos).manhattanLength() <= snapDistance)
                 {
-                    QPoint anchorPos = anchors[j].rect.center();
-                    if ((p2 - anchorPos).manhattanLength() <= snapDistance)
-                    {
-                        // 创建新的连接记录
-                        ArrowConnection newConn;
-                        newConn.arrowIndex = i;
-                        newConn.shapeIndex = shapeIndex;
-                        newConn.handleIndex = j;
-                        newConn.isStartPoint = false;
-                        arrowConnections.push_back(newConn);
-                        
-                        // 更新箭头终点位置
-                        arrow->setP2(anchorPos);
-                        break;
-                    }
+                    // 创建新的连接记录
+                    ArrowConnection newConn;
+                    newConn.arrowIndex = i;
+                    newConn.shapeIndex = shapeIndex;
+                    newConn.handleIndex = j;
+                    newConn.isStartPoint = true;
+                    arrowConnections.push_back(newConn);
+
+                    // 更新箭头起点位置
+                    arrow->setP1(anchorPos);
+                    break;
+                }
+            }
+        }
+
+        // 同样检查终点
+        if (!endPointConnected)
+        {
+            for (size_t j = 0; j < anchors.size(); ++j)
+            {
+                QPoint anchorPos = anchors[j].rect.center();
+                if ((p2 - anchorPos).manhattanLength() <= snapDistance)
+                {
+                    // 创建新的连接记录
+                    ArrowConnection newConn;
+                    newConn.arrowIndex = i;
+                    newConn.shapeIndex = shapeIndex;
+                    newConn.handleIndex = j;
+                    newConn.isStartPoint = false;
+                    arrowConnections.push_back(newConn);
+
+                    // 更新箭头终点位置
+                    arrow->setP2(anchorPos);
+                    break;
                 }
             }
         }
