@@ -22,6 +22,17 @@ public:
     const QLine &getLine() const { return m_line; }
     void setP1(const QPoint &p1) { m_line.setP1(p1); }
     void setP2(const QPoint &p2) { m_line.setP2(p2); }
+    
+    // 更新连接点位置
+    void updateConnection(bool isStartPoint, const QPoint &delta) {
+        if (isStartPoint) {
+            QPoint p1 = m_line.p1();
+            m_line.setP1(p1 + delta);
+        } else {
+            QPoint p2 = m_line.p2();
+            m_line.setP2(p2 + delta);
+        }
+    }
 
     // 序列化方法
     QJsonObject toJson() const override

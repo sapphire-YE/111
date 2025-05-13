@@ -1,11 +1,12 @@
 #include "ShapeLibraryWidget.h"
+#include "DrawingArea.h"
 #include <QDrag>
 #include <QMimeData>
 #include <QDebug>
 
 ShapeLibraryWidget::ShapeLibraryWidget(QWidget *parent)
     : QWidget(parent), m_listWidget(new QListWidget(this)),
-      m_layout(new QVBoxLayout(this))
+      m_layout(new QVBoxLayout(this)), m_drawingArea(nullptr)
 {
   m_layout->addWidget(m_listWidget);
   m_layout->setContentsMargins(0, 0, 0, 0);
@@ -135,4 +136,9 @@ void ShapeLibraryWidget::enableToolTips()
       "QListWidget::item:hover { background-color: rgba(0, 120, 215, 40); }"        // 悬停效果
       "QListWidget::item:selected { background-color: rgba(0, 120, 215, 80); }"     // 选中项的背景色
   );
+}
+
+void ShapeLibraryWidget::setDrawingArea(DrawingArea* drawingArea)
+{
+  m_drawingArea = drawingArea;
 }

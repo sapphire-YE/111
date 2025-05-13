@@ -11,9 +11,19 @@
 #include <QWidget>
 #include <memory>
 #include <vector>
+#include <stack>
 
 class QDragEnterEvent;
 class QDropEvent;
+
+// 操作类型枚举
+enum class OperationType {
+  Add,      // 添加图形
+  Remove,   // 删除图形
+  Move,     // 移动图形
+  Resize,   // 调整图形尺寸
+  Property  // 属性更改
+};
 
 class DrawingArea : public QWidget
 {
@@ -30,6 +40,8 @@ signals:
   void pageSizeChanged(QSize size);         // 当页面大小变化时发出信号
   void gridSizeChanged(int size);           // 当网格大小变化时发出信号
   void gridVisibilityChanged(bool visible); // 当网格显示状态变化时发出信号
+  void canUndoChanged(bool canUndo);        // 当可撤销状态变化时发出信号
+  void canRedoChanged(bool canRedo);        // 当可重做状态变化时发出信号
 
 public:
   void setBackgroundColor(const QColor &color)
@@ -70,6 +82,12 @@ public:
   // 设置选中图形的线条颜色和粗细
   void setSelectedShapeLineColor(const QColor &color);
   void setSelectedShapeLineWidth(int width);
+  
+  // 撤销和重做功能
+  void undo();  // 撤销上一步操作
+  void redo();  // 重做上一步操作
+  bool canUndo() const { return !m_undoStack.empty(); } // 是否可以撤销
+  bool canRedo() const { return !m_redoStack.empty(); } // 是否可以重做
 
 protected:
   void paintEvent(QPaintEvent *event) override;
@@ -83,6 +101,16 @@ protected:
   void contextMenuEvent(QContextMenuEvent *event) override; // 右键菜单事件
   void wheelEvent(QWheelEvent *event) override;             // 滚轮事件用于缩放支持
 
+public:
+  // 记录箭头和图形之间的连接关系
+  struct ArrowConnection
+  {
+    int arrowIndex;    // 箭头的索引
+    int shapeIndex;    // 连接的图形索引
+    int handleIndex;   // 连接的锚点索引
+    bool isStartPoint; // 是否是箭头的起点
+  };
+
 private:
   QColor m_bgColor = Qt::white;
   int m_gridSize = 20;                            // 默认20
@@ -93,7 +121,10 @@ private:
   int selectedIndex = -1;                         // 当前选中的图形索引
   int snappedShapeIndex = -1;                     // 记录被吸附的图形索引
   QPoint lastMousePos;                            // 上一次鼠标位置
+  QPoint m_moveStartPos;                          // 开始移动时的鼠标位置，用于计算总移动量
   bool dragging = false;                          // 是否正在拖动
+  bool resizing = false;                          // 是否正在调整尺寸
+  QRect originalRect;                             // 记录开始调整尺寸前的原始矩形
 
   // 坐标转换函数（考虑缩放因子）
   QPoint screenToDoc(const QPoint &pos) const; // 屏幕坐标转文档坐标
@@ -117,14 +148,6 @@ private:
   };
   SnapInfo snappedHandle;
 
-  // 记录箭头和图形之间的连接关系
-  struct ArrowConnection
-  {
-    int arrowIndex;    // 箭头的索引
-    int shapeIndex;    // 连接的图形索引
-    int handleIndex;   // 连接的锚点索引
-    bool isStartPoint; // 是否是箭头的起点
-  };
   std::vector<ArrowConnection> arrowConnections;
 
   // 更新连接的箭头位置
@@ -138,6 +161,48 @@ private:
   void pasteShape();
   void deleteSelectedShape();
   std::unique_ptr<ShapeBase> m_clipboardShape; // 用于存储复制的图形
+  
+  // 历史记录类，记录一步操作
+  class HistoryAction {
+  public:
+    OperationType type;
+    int shapeIndex;      // 操作的图形索引
+    
+    // 图形操作数据（根据操作类型决定如何使用）
+    std::unique_ptr<ShapeBase> shape;     // 用于添加/删除时存储图形
+    QPoint moveDelta;                     // 移动操作的偏移量
+    QRect oldRect;                        // 调整尺寸前的矩形
+    QRect newRect;                        // 调整尺寸后的矩形
+    
+    // 额外属性数据（用于属性更改）
+    QColor oldLineColor;
+    QColor newLineColor;
+    int oldLineWidth;
+    int newLineWidth;
+    
+    // 用于恢复箭头连接
+    std::vector<ArrowConnection> connections;
+    
+    HistoryAction(OperationType t, int idx) : type(t), shapeIndex(idx) {}
+  };
+  
+  // 撤销和重做堆栈
+  std::stack<HistoryAction> m_undoStack;
+  std::stack<HistoryAction> m_redoStack;
+  
+  // 记录操作到历史
+  void recordAddShape(int index);
+  void recordRemoveShape(int index);
+  void recordMoveShape(int index, const QPoint &delta);
+  void recordResizeShape(int index, const QRect &oldRect, const QRect &newRect);
+  void recordPropertyChange(int index, const QColor &oldColor, const QColor &newColor, 
+                           int oldWidth, int newWidth);
+  
+  // 清空重做堆栈
+  void clearRedoStack();
+  
+  // 禁用历史记录的标志（在执行撤销/重做操作时设为true，避免重复记录）
+  bool m_ignoreHistoryActions = false;
 };
 
 #endif // DRAWINGAREA_H

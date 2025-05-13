@@ -2,7 +2,6 @@
 #include "ShapeArrow.h"
 #include <QPainter>
 #include <cmath>
-// #include <QDebug>
 
 ShapeArrow::ShapeArrow(const QLine &line) : m_line(line) {}
 

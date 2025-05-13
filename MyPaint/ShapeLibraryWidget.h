@@ -18,6 +18,8 @@ public:
   QString getCurrentShapeType() const;
   // 启用工具提示
   void enableToolTips();
+  // 设置绘图区域
+  void setDrawingArea(class DrawingArea* drawingArea);
 
 protected:
   // 重写拖拽事件
@@ -26,6 +28,7 @@ protected:
 private:
   QListWidget *m_listWidget;
   QVBoxLayout *m_layout;
+  class DrawingArea *m_drawingArea;
 
   // 添加一个图形项到列表
   void addShapeItem(const QString &name, const QString &type);

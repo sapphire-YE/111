@@ -17,8 +17,6 @@
 #include <QShortcut>
 #include <QFile>
 #include <QTabBar>
-#include <QProxyStyle>
-#include <QStyleOptionTab>
 #include <QResizeEvent>
 #include <QTimer>
 
@@ -54,7 +52,6 @@ MainWindow::MainWindow(QWidget *parent)
 
   createMenus();
   setupToolBar();
-  setupConnections();
 
   // 创建绘图区
   m_drawingArea = new DrawingArea(nullptr);
@@ -63,12 +60,9 @@ MainWindow::MainWindow(QWidget *parent)
   scrollArea->setWidgetResizable(true);
   ui->verticalLayoutDrawingArea->addWidget(scrollArea);
 
-  // 连接缩放因子变化信号
-  connect(m_drawingArea, &DrawingArea::zoomFactorChanged, this, [this](double)
-          { updateZoomMenuState(); });
-
   // 创建图形库
   m_shapeLibrary = new ShapeLibraryWidget(this);
+  m_shapeLibrary->setDrawingArea(m_drawingArea);
   // 替换原有的shapeListWidget
   QLayout *dockLayout = ui->dockWidgetContents->layout();
   if (QWidget *oldWidget = ui->shapeListWidget)
@@ -89,10 +83,13 @@ MainWindow::MainWindow(QWidget *parent)
     delete oldPropertyWidget;
   }
   propertyDockLayout->addWidget(m_propertyPanel);
+  
+  // 在创建完所有对象后再设置连接
+  setupConnections();
 
-  // 连接图形选择信号
-  connect(m_drawingArea, &DrawingArea::shapeSelected, m_propertyPanel, &PropertyPanel::updateForSelectedShape);
-  connect(m_drawingArea, &DrawingArea::selectionCleared, m_propertyPanel, &PropertyPanel::clearProperties);
+  // 连接缩放因子变化信号
+  connect(m_drawingArea, &DrawingArea::zoomFactorChanged, this, [this](double)
+          { updateZoomMenuState(); });
 
   connect(ui->toolButtonBackgroundColor, &QToolButton::clicked, this, [this]()
           {
@@ -329,6 +326,11 @@ void MainWindow::setupToolBar()
 
 void MainWindow::setupConnections()
 {
+  // 首先检查m_drawingArea是否已创建
+  if (!m_drawingArea) {
+    return;
+  }
+
   // 连接文件操作按钮
   connect(ui->actionNew, &QAction::triggered, this, &MainWindow::onNewFile);
   connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::onOpenFile);
@@ -348,6 +350,49 @@ void MainWindow::setupConnections()
       QPoint pos = button->mapToGlobal(QPoint(0, button->height()));
       exportMenu->exec(pos);
     } });
+    
+  // 连接排列操作
+  connect(actionMoveUp, &QAction::triggered, this, &MainWindow::onMoveUp);
+  connect(actionMoveDown, &QAction::triggered, this, &MainWindow::onMoveDown);
+  connect(actionMoveToTop, &QAction::triggered, this, &MainWindow::onMoveToTop);
+  connect(actionMoveToBottom, &QAction::triggered, this, &MainWindow::onMoveToBottom);
+
+  // 缩放菜单中的操作
+  connect(m_zoomInAction, &QAction::triggered, this, &MainWindow::onZoomIn);
+  connect(m_zoomOutAction, &QAction::triggered, this, &MainWindow::onZoomOut);
+  connect(m_zoomResetAction, &QAction::triggered, this, &MainWindow::onZoomReset);
+  for (int i = 0; i < 6; ++i)
+  {
+    connect(m_zoomCustomActions[i], &QAction::triggered, this,
+            [this, i]()
+            { onZoomChanged(i); });
+  }
+
+  // 连接撤销和重做按钮
+  connect(ui->actionUndo, &QAction::triggered, this, [this]() {
+    if (m_drawingArea) {
+      m_drawingArea->undo();
+    }
+  });
+  
+  connect(ui->actionRedo, &QAction::triggered, this, [this]() {
+    if (m_drawingArea) {
+      m_drawingArea->redo();
+    }
+  });
+  
+  // 监听撤销和重做可用性变化
+  connect(m_drawingArea, &DrawingArea::canUndoChanged, this, [this](bool canUndo) {
+    ui->actionUndo->setEnabled(canUndo);
+  });
+  
+  connect(m_drawingArea, &DrawingArea::canRedoChanged, this, [this](bool canRedo) {
+    ui->actionRedo->setEnabled(canRedo);
+  });
+  
+  // 初始时禁用撤销和重做按钮
+  ui->actionUndo->setEnabled(false);
+  ui->actionRedo->setEnabled(false);
 }
 
 void MainWindow::onNewFile()
