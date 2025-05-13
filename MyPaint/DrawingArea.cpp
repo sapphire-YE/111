@@ -160,6 +160,17 @@ void DrawingArea::clear()
     arrowConnections.clear();
     selectedIndex = -1;
     snappedHandle = SnapInfo();
+    
+    // 清空撤销重做栈
+    while (!m_undoStack.empty()) {
+        m_undoStack.pop();
+    }
+    while (!m_redoStack.empty()) {
+        m_redoStack.pop();
+    }
+    emit canUndoChanged(false);
+    emit canRedoChanged(false);
+    
     update();
 }
 
@@ -752,6 +763,11 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
 
             // 清除箭头的选中状态
             arrow->clearHandleSelection();
+            
+            // 发送选中图形信号确保属性面板更新
+            if (selectedIndex != -1) {
+                emit shapeSelected(shapes[selectedIndex].get());
+            }
         }
         else
         {

@@ -87,6 +87,10 @@ MainWindow::MainWindow(QWidget *parent)
   // 在创建完所有对象后再设置连接
   setupConnections();
 
+  // 连接DrawingArea的选中信号到PropertyPanel
+  connect(m_drawingArea, &DrawingArea::shapeSelected, m_propertyPanel, &PropertyPanel::updateForSelectedShape);
+  connect(m_drawingArea, &DrawingArea::selectionCleared, m_propertyPanel, &PropertyPanel::clearProperties);
+
   // 连接缩放因子变化信号
   connect(m_drawingArea, &DrawingArea::zoomFactorChanged, this, [this](double)
           { updateZoomMenuState(); });
@@ -197,6 +201,12 @@ void MainWindow::createMenus()
                       QKeySequence::Save);
   fileMenu->addAction(tr("Save As"), this, &MainWindow::onSaveAs,
                       QKeySequence::SaveAs);
+  fileMenu->addSeparator();
+  // 添加撤销和重做
+  ui->actionUndo->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Z));
+  ui->actionRedo->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Y));
+  fileMenu->addAction(ui->actionUndo);
+  fileMenu->addAction(ui->actionRedo);
   fileMenu->addSeparator();
   fileMenu->addAction(tr("Export as PNG"), this, &MainWindow::onExportPNG);
   fileMenu->addAction(tr("Export as SVG"), this, &MainWindow::onExportSVG);
@@ -412,11 +422,19 @@ void MainWindow::onOpenFile()
 
   if (!fileName.isEmpty())
   {
-    if (m_drawingArea && m_drawingArea->loadFromFile(fileName))
+  if (m_drawingArea)
+  {
+    m_drawingArea->clear();  // 先清空当前内容，这会同时清空撤销重做栈
+    if (m_drawingArea->loadFromFile(fileName))
     {
       m_currentFile = fileName;
       setWindowTitle(QFileInfo(fileName).fileName() + tr(" - Flowchart"));
     }
+    else
+    {
+      QMessageBox::warning(this, tr("Error"), tr("Unable to open file"));
+    }
+  }
     else
     {
       QMessageBox::warning(this, tr("Error"), tr("Unable to open file"));

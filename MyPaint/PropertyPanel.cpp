@@ -377,26 +377,26 @@ void PropertyPanel::setupShapeStyleTab()
     lineGroupLayout->addWidget(m_lineWidthSpinBox, 2, 1, 1, 3);
 
     // 箭头选项（仅用于箭头图形）
-    lineGroupLayout->addWidget(new QLabel(tr("Arrow Type:")), 3, 0);
-    m_startArrowCombo = new QComboBox();
-    m_startArrowCombo->addItem(tr("None"));
-    m_startArrowCombo->addItem(tr("Standard"));
-    m_startArrowCombo->addItem(tr("Triangle"));
-    lineGroupLayout->addWidget(m_startArrowCombo, 3, 1);
+    // lineGroupLayout->addWidget(new QLabel(tr("Arrow Type:")), 3, 0);
+    // m_startArrowCombo = new QComboBox();
+    // m_startArrowCombo->addItem(tr("None"));
+    // m_startArrowCombo->addItem(tr("Standard"));
+    // m_startArrowCombo->addItem(tr("Triangle"));
+    // lineGroupLayout->addWidget(m_startArrowCombo, 3, 1);
 
-    m_endArrowCombo = new QComboBox();
-    m_endArrowCombo->addItem(tr("None"));
-    m_endArrowCombo->addItem(tr("Standard"));
-    m_endArrowCombo->addItem(tr("Triangle"));
-    lineGroupLayout->addWidget(m_endArrowCombo, 3, 2);
+    // m_endArrowCombo = new QComboBox();
+    // m_endArrowCombo->addItem(tr("None"));
+    // m_endArrowCombo->addItem(tr("Standard"));
+    // m_endArrowCombo->addItem(tr("Triangle"));
+    // lineGroupLayout->addWidget(m_endArrowCombo, 3, 2);
 
     // 连接线类型
-    lineGroupLayout->addWidget(new QLabel(tr("Connection Type:")), 4, 0);
-    m_connectionTypeCombo = new QComboBox();
-    m_connectionTypeCombo->addItem(tr("Straight"));
-    m_connectionTypeCombo->addItem(tr("Segmented"));
-    m_connectionTypeCombo->addItem(tr("Curved"));
-    lineGroupLayout->addWidget(m_connectionTypeCombo, 4, 1, 1, 3);
+    // lineGroupLayout->addWidget(new QLabel(tr("Connection Type:")), 4, 0);
+    // m_connectionTypeCombo = new QComboBox();
+    // m_connectionTypeCombo->addItem(tr("Straight"));
+    // m_connectionTypeCombo->addItem(tr("Segmented"));
+    // m_connectionTypeCombo->addItem(tr("Curved"));
+    // lineGroupLayout->addWidget(m_connectionTypeCombo, 4, 1, 1, 3);
 
     layout->addWidget(m_lineGroup);
     layout->addStretch();
@@ -871,10 +871,10 @@ void PropertyPanel::updateShapeProperties(ShapeBase *shape)
     }
 
     // 根据图形类型启用/禁用特定控件
-    bool isArrow = dynamic_cast<ShapeArrow *>(shape);
-    m_startArrowCombo->setEnabled(isArrow);
-    m_endArrowCombo->setEnabled(isArrow);
-    m_connectionTypeCombo->setEnabled(isArrow);
+    // bool isArrow = dynamic_cast<ShapeArrow *>(shape);
+    // m_startArrowCombo->setEnabled(isArrow);
+    // m_endArrowCombo->setEnabled(isArrow);
+    // m_connectionTypeCombo->setEnabled(isArrow);
 }
 
 void PropertyPanel::clearProperties()
