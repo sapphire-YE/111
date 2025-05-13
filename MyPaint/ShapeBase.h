@@ -57,7 +57,8 @@ public:
   virtual std::vector<Handle> getArrowAnchors() const { return {}; }
 
   // 将加号锚点索引映射到对应的ArrowAnchor锚点索引
-  virtual int mapArrowHandleToAnchor(int arrowHandleIndex) const {
+  virtual int mapArrowHandleToAnchor(int arrowHandleIndex) const
+  {
     // 默认实现：加号锚点的direction值从9开始，对应ArrowAnchor从0开始
     return arrowHandleIndex - 9;
   }

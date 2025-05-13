@@ -125,8 +125,8 @@ MainWindow::MainWindow(QWidget *parent)
           [this](bool checked)
           {
             m_drawingArea->setGridVisible(checked);
-            ui->toolButtonGridVisible->setText(checked ? "Hide Grid"
-                                                       : "Show Grid");
+            ui->toolButtonGridVisible->setText(checked ? tr("Hide Grid")
+                                                     : tr("Show Grid"));
           });
 
   // 连接页面大小按钮
@@ -166,7 +166,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
     // 同步更新工具栏的网格可见性按钮
     ui->toolButtonGridVisible->setChecked(visible);
-    ui->toolButtonGridVisible->setText(visible ? "Hide Grid" : "Show Grid"); });
+    ui->toolButtonGridVisible->setText(visible ? tr("Hide Grid") : tr("Show Grid")); });
 
   connect(m_drawingArea, &DrawingArea::gridSizeChanged, this, [this](int size)
           {
@@ -192,30 +192,30 @@ MainWindow::~MainWindow()
 void MainWindow::createMenus()
 {
   // 创建文件菜单
-  QMenu *fileMenu = menuBar()->addMenu("文件");
-  fileMenu->addAction("新建", this, &MainWindow::onNewFile, QKeySequence::New);
-  fileMenu->addAction("打开", this, &MainWindow::onOpenFile,
+  QMenu *fileMenu = menuBar()->addMenu(tr("File"));
+  fileMenu->addAction(tr("New"), this, &MainWindow::onNewFile, QKeySequence::New);
+  fileMenu->addAction(tr("Open"), this, &MainWindow::onOpenFile,
                       QKeySequence::Open);
-  fileMenu->addAction("保存", this, &MainWindow::onSaveFile,
+  fileMenu->addAction(tr("Save"), this, &MainWindow::onSaveFile,
                       QKeySequence::Save);
-  fileMenu->addAction("另存为", this, &MainWindow::onSaveAs,
+  fileMenu->addAction(tr("Save As"), this, &MainWindow::onSaveAs,
                       QKeySequence::SaveAs);
   fileMenu->addSeparator();
-  fileMenu->addAction("导出为PNG", this, &MainWindow::onExportPNG);
-  fileMenu->addAction("导出为SVG", this, &MainWindow::onExportSVG);
+  fileMenu->addAction(tr("Export as PNG"), this, &MainWindow::onExportPNG);
+  fileMenu->addAction(tr("Export as SVG"), this, &MainWindow::onExportSVG);
 
   // 创建排列菜单
-  QMenu *arrangeMenu = menuBar()->addMenu("排列");
-  actionMoveUp = arrangeMenu->addAction("上移一层", this, &MainWindow::onMoveUp,
+  QMenu *arrangeMenu = menuBar()->addMenu(tr("Arrange"));
+  actionMoveUp = arrangeMenu->addAction(tr("Move Up"), this, &MainWindow::onMoveUp,
                                         QKeySequence(Qt::CTRL + Qt::Key_Up));
   actionMoveDown =
-      arrangeMenu->addAction("下移一层", this, &MainWindow::onMoveDown,
+      arrangeMenu->addAction(tr("Move Down"), this, &MainWindow::onMoveDown,
                              QKeySequence(Qt::CTRL + Qt::Key_Down));
   actionMoveToTop =
-      arrangeMenu->addAction("移到最顶层", this, &MainWindow::onMoveToTop,
+      arrangeMenu->addAction(tr("Bring to Front"), this, &MainWindow::onMoveToTop,
                              QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_Up));
   actionMoveToBottom =
-      arrangeMenu->addAction("移到最底层", this, &MainWindow::onMoveToBottom,
+      arrangeMenu->addAction(tr("Send to Back"), this, &MainWindow::onMoveToBottom,
                              QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_Down));
 }
 
@@ -225,7 +225,7 @@ void MainWindow::setupToolBar()
   QMenu *lineStyleMenu = new QMenu(this);
 
   // 添加线条颜色选项
-  QAction *lineColorAction = lineStyleMenu->addAction("线条颜色");
+  QAction *lineColorAction = lineStyleMenu->addAction(tr("Line Color"));
   connect(lineColorAction, &QAction::triggered, this, &MainWindow::onLineColorButtonClicked);
 
   // 添加分隔符
@@ -236,7 +236,7 @@ void MainWindow::setupToolBar()
   QHBoxLayout *lineWidthLayout = new QHBoxLayout(lineWidthWidget);
   lineWidthLayout->setContentsMargins(12, 3, 12, 3);
 
-  QLabel *lineWidthLabel = new QLabel("线条宽度:", lineWidthWidget);
+  QLabel *lineWidthLabel = new QLabel(tr("Line Width:"), lineWidthWidget);
   lineWidthLayout->addWidget(lineWidthLabel);
 
   m_lineWidthSpinBox = new QSpinBox(lineWidthWidget);
@@ -251,8 +251,8 @@ void MainWindow::setupToolBar()
 
   // 创建线条样式按钮
   QToolButton *lineStyleButton = new QToolButton(this);
-  lineStyleButton->setText("线条样式");
-  lineStyleButton->setToolTip("设置选中图形的线条样式");
+  lineStyleButton->setText(tr("Line Style"));
+  lineStyleButton->setToolTip(tr("Set line style for selected shape"));
   lineStyleButton->setPopupMode(QToolButton::InstantPopup);
   lineStyleButton->setMenu(lineStyleMenu);
   ui->startToolBar->addWidget(lineStyleButton);
@@ -262,29 +262,29 @@ void MainWindow::setupToolBar()
 
   // 添加"上移"按钮
   QToolButton *moveUpButton = new QToolButton(this);
-  moveUpButton->setText("上移");
-  moveUpButton->setToolTip("上移一层");
+  moveUpButton->setText(tr("Move Up"));
+  moveUpButton->setToolTip(tr("Move one layer up"));
   connect(moveUpButton, &QToolButton::clicked, this, &MainWindow::onMoveUp);
   ui->arrangeToolBar->addWidget(moveUpButton);
 
   // 添加"下移"按钮
   QToolButton *moveDownButton = new QToolButton(this);
-  moveDownButton->setText("下移");
-  moveDownButton->setToolTip("下移一层");
+  moveDownButton->setText(tr("Move Down"));
+  moveDownButton->setToolTip(tr("Move one layer down"));
   connect(moveDownButton, &QToolButton::clicked, this, &MainWindow::onMoveDown);
   ui->arrangeToolBar->addWidget(moveDownButton);
 
   // 添加"置顶"按钮
   QToolButton *moveToTopButton = new QToolButton(this);
-  moveToTopButton->setText("置顶");
-  moveToTopButton->setToolTip("置于顶层");
+  moveToTopButton->setText(tr("Bring to Front"));
+  moveToTopButton->setToolTip(tr("Bring shape to front"));
   connect(moveToTopButton, &QToolButton::clicked, this, &MainWindow::onMoveToTop);
   ui->arrangeToolBar->addWidget(moveToTopButton);
 
   // 添加"置底"按钮
   QToolButton *moveToBottomButton = new QToolButton(this);
-  moveToBottomButton->setText("置底");
-  moveToBottomButton->setToolTip("置于底层");
+  moveToBottomButton->setText(tr("Send to Back"));
+  moveToBottomButton->setToolTip(tr("Send shape to back"));
   connect(moveToBottomButton, &QToolButton::clicked, this, &MainWindow::onMoveToBottom);
   ui->arrangeToolBar->addWidget(moveToBottomButton);
 
@@ -295,9 +295,9 @@ void MainWindow::setupToolBar()
   m_zoomMenu = new QMenu(this);
 
   // 添加基本缩放操作
-  m_zoomInAction = m_zoomMenu->addAction("放大", this, &MainWindow::onZoomIn, QKeySequence(Qt::CTRL + Qt::Key_Plus));
-  m_zoomOutAction = m_zoomMenu->addAction("缩小", this, &MainWindow::onZoomOut, QKeySequence(Qt::CTRL + Qt::Key_Minus));
-  m_zoomResetAction = m_zoomMenu->addAction("重置缩放 (100%)", this, &MainWindow::onZoomReset, QKeySequence(Qt::CTRL + Qt::Key_0));
+  m_zoomInAction = m_zoomMenu->addAction(tr("Zoom In"), this, &MainWindow::onZoomIn, QKeySequence(Qt::CTRL + Qt::Key_Plus));
+  m_zoomOutAction = m_zoomMenu->addAction(tr("Zoom Out"), this, &MainWindow::onZoomOut, QKeySequence(Qt::CTRL + Qt::Key_Minus));
+  m_zoomResetAction = m_zoomMenu->addAction(tr("Reset Zoom (100%)"), this, &MainWindow::onZoomReset, QKeySequence(Qt::CTRL + Qt::Key_0));
 
   m_zoomMenu->addSeparator();
 
@@ -320,8 +320,8 @@ void MainWindow::setupToolBar()
 
   // 创建缩放按钮并添加到Page选项卡
   m_zoomButton = new QToolButton(ui->tabPage);
-  m_zoomButton->setText("缩放");
-  m_zoomButton->setToolTip("设置页面缩放比例");
+  m_zoomButton->setText(tr("Zoom"));
+  m_zoomButton->setToolTip(tr("Set page zoom level"));
   m_zoomButton->setPopupMode(QToolButton::InstantPopup);
   m_zoomButton->setMenu(m_zoomMenu);
   ui->horizontalLayoutPage->addWidget(m_zoomButton);
@@ -338,8 +338,8 @@ void MainWindow::setupConnections()
   connect(ui->actionExport, &QAction::triggered, this, [this]()
           {
     QMenu *exportMenu = new QMenu(this);
-    exportMenu->addAction("导出为PNG", this, &MainWindow::onExportPNG);
-    exportMenu->addAction("导出为SVG", this, &MainWindow::onExportSVG);
+    exportMenu->addAction(tr("Export as PNG"), this, &MainWindow::onExportPNG);
+    exportMenu->addAction(tr("Export as SVG"), this, &MainWindow::onExportSVG);
 
     // 获取工具栏按钮的位置
     QToolBar *toolbar = ui->startToolBar;
@@ -356,25 +356,25 @@ void MainWindow::onNewFile()
   {
     m_drawingArea->clear();
     m_currentFile.clear();
-    setWindowTitle("未命名 - 流程图");
+    setWindowTitle(tr("Untitled - Flowchart"));
   }
 }
 
 void MainWindow::onOpenFile()
 {
   QString fileName = QFileDialog::getOpenFileName(
-      this, "打开流程图", "", "流程图文件 (*.flow);;所有文件 (*)");
+      this, tr("Open Flowchart"), "", tr("Flowchart Files (*.flow);;All Files (*)"));
 
   if (!fileName.isEmpty())
   {
     if (m_drawingArea && m_drawingArea->loadFromFile(fileName))
     {
       m_currentFile = fileName;
-      setWindowTitle(QFileInfo(fileName).fileName() + " - 流程图");
+      setWindowTitle(QFileInfo(fileName).fileName() + tr(" - Flowchart"));
     }
     else
     {
-      QMessageBox::warning(this, "错误", "无法打开文件");
+      QMessageBox::warning(this, tr("Error"), tr("Unable to open file"));
     }
   }
 }
@@ -389,7 +389,7 @@ void MainWindow::onSaveFile()
   {
     if (m_drawingArea && !m_drawingArea->saveToFile(m_currentFile))
     {
-      QMessageBox::warning(this, "错误", "保存文件失败");
+      QMessageBox::warning(this, tr("Error"), tr("Failed to save file"));
     }
   }
 }
@@ -397,18 +397,18 @@ void MainWindow::onSaveFile()
 void MainWindow::onSaveAs()
 {
   QString fileName = QFileDialog::getSaveFileName(
-      this, "保存流程图", "", "流程图文件 (*.flow);;所有文件 (*)");
+      this, tr("Save Flowchart"), "", tr("Flowchart Files (*.flow);;All Files (*)"));
 
   if (!fileName.isEmpty())
   {
     if (m_drawingArea && m_drawingArea->saveToFile(fileName))
     {
       m_currentFile = fileName;
-      setWindowTitle(QFileInfo(fileName).fileName() + " - 流程图");
+      setWindowTitle(QFileInfo(fileName).fileName() + tr(" - Flowchart"));
     }
     else
     {
-      QMessageBox::warning(this, "错误", "保存文件失败");
+      QMessageBox::warning(this, tr("Error"), tr("Failed to save file"));
     }
   }
 }
@@ -416,13 +416,13 @@ void MainWindow::onSaveAs()
 void MainWindow::onExportPNG()
 {
   QString fileName =
-      QFileDialog::getSaveFileName(this, "导出PNG", "", "PNG图片 (*.png)");
+      QFileDialog::getSaveFileName(this, tr("Export PNG"), "", tr("PNG Image (*.png)"));
 
   if (!fileName.isEmpty() && m_drawingArea)
   {
     if (!m_drawingArea->exportToPNG(fileName))
     {
-      QMessageBox::warning(this, "错误", "导出PNG失败");
+      QMessageBox::warning(this, tr("Error"), tr("Failed to export PNG"));
     }
   }
 }
@@ -430,13 +430,13 @@ void MainWindow::onExportPNG()
 void MainWindow::onExportSVG()
 {
   QString fileName =
-      QFileDialog::getSaveFileName(this, "导出SVG", "", "SVG文件 (*.svg)");
+      QFileDialog::getSaveFileName(this, tr("Export SVG"), "", tr("SVG File (*.svg)"));
 
   if (!fileName.isEmpty() && m_drawingArea)
   {
     if (!m_drawingArea->exportToSVG(fileName))
     {
-      QMessageBox::warning(this, "错误", "导出SVG失败");
+      QMessageBox::warning(this, tr("Error"), tr("Failed to export SVG"));
     }
   }
 }

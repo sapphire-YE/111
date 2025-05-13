@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>872</width>
-    <height>432</height>
+    <width>960</width>
+    <height>540</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -199,7 +199,7 @@ QWidget#drawingArea {
   </action>
   <action name="actionExport">
    <property name="text">
-    <string>导出</string>
+    <string>Export</string>
    </property>
   </action>
   <action name="actionUndo">

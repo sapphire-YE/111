@@ -47,10 +47,10 @@ ShapeLibraryWidget::~ShapeLibraryWidget() {}
 void ShapeLibraryWidget::initShapeItems()
 {
   // 添加基本图形
-  addShapeItem("Rectangle", "rect");
-  addShapeItem("Ellipse", "ellipse");
+  addShapeItem(tr("Rectangle"), "rect");
+  addShapeItem(tr("Ellipse"), "ellipse");
   // addShapeItem("Polygon", "polygon");
-  addShapeItem("Arrow", "arrow");
+  addShapeItem(tr("Arrow"), "arrow");
 }
 
 QString ShapeLibraryWidget::getCurrentShapeType() const
@@ -94,7 +94,7 @@ void ShapeLibraryWidget::addShapeItem(const QString &name,
   // 尝试不同的图标路径
   QString iconPath = ":/" + (QString("icons/") + type) + ".png";
   QIcon icon(iconPath);
-  qDebug() << "尝试加载图标：" << iconPath << (icon.isNull() ? "失败" : "成功");
+  qDebug() << "Try to load icon:" << iconPath << (icon.isNull() ? "Failed" : "Success");
 
   // 如果图标不为空，则设置
   item->setIcon(icon);
@@ -102,14 +102,15 @@ void ShapeLibraryWidget::addShapeItem(const QString &name,
   // 确保图标足够大
   QSize iconSize = QSize(40, 40);
   QPixmap pixmap = icon.pixmap(iconSize);
-  qDebug() << "图标尺寸：" << pixmap.width() << "x" << pixmap.height() << "是否为空：" << pixmap.isNull();
+  qDebug() << "IconSize:" << pixmap.width() << "x" << pixmap.height() << "Empty or not:" << pixmap.isNull();
 
   // 设置增强的提示文本
   QString tooltipHtml = QString("<div style='text-align: center;'>"
                                 "<b>%1</b>"
-                                "<br><span style='color: #666;'>单击选择，拖拽使用</span>"
+                                "<br><span style='color: #666;'>%2</span>"
                                 "</div>")
-                            .arg(name);
+                            .arg(name)
+                            .arg(tr("Click to select, drag to use"));
   item->setToolTip(tooltipHtml);
 
   // 设置足够的大小以显示图标

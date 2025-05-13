@@ -57,7 +57,7 @@ private:
     // UI Elements
     QTabWidget *m_tabWidget;
 
-    // 页面样式标签页
+    // 标签页
     QWidget *m_pageStyleTab;
 
     // 背景设置

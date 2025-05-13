@@ -278,7 +278,7 @@ void DrawingArea::paintEvent(QPaintEvent *event)
         int endX = m_pageSize.width(); // 到页面右边结束
         for (int x = startX, idx = startX / gridSize; x <= endX; x += gridSize, ++idx)
         {
-            if (idx % majorGridStep != 0)  // 只绘制细线
+            if (idx % majorGridStep != 0) // 只绘制细线
             {
                 painter.setPen(thinPen);
                 painter.drawLine(x, 0, x, m_pageSize.height()); // 从页面顶部到底部
@@ -304,7 +304,7 @@ void DrawingArea::paintEvent(QPaintEvent *event)
         // 第三步：绘制粗的竖线
         for (int x = startX, idx = startX / gridSize; x <= endX; x += gridSize, ++idx)
         {
-            if (idx % majorGridStep == 0)  // 只绘制粗线
+            if (idx % majorGridStep == 0) // 只绘制粗线
             {
                 painter.setPen(thickPen);
                 painter.drawLine(x, 0, x, m_pageSize.height()); // 从页面顶部到底部
@@ -384,15 +384,16 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
                                 connection.shapeIndex = selectedIndex - 1; // 连接到前一个图形
                                 connection.handleIndex = arrowAnchorIndex;
                                 connection.isStartPoint = true; // 箭头的起点
-                                
+
                                 // 确保没有重复连接
                                 arrowConnections.erase(
                                     std::remove_if(arrowConnections.begin(), arrowConnections.end(),
-                                                [selectedIndex = this->selectedIndex](const ArrowConnection &conn) {
-                                                    return conn.arrowIndex == selectedIndex && conn.isStartPoint;
-                                                }),
+                                                   [selectedIndex = this->selectedIndex](const ArrowConnection &conn)
+                                                   {
+                                                       return conn.arrowIndex == selectedIndex && conn.isStartPoint;
+                                                   }),
                                     arrowConnections.end());
-                                    
+
                                 arrowConnections.push_back(connection);
                             }
 
@@ -655,9 +656,10 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                     // 首先删除该箭头终点的所有现有连接
                     arrowConnections.erase(
                         std::remove_if(arrowConnections.begin(), arrowConnections.end(),
-                                    [this](const ArrowConnection &conn) {
-                                        return conn.arrowIndex == selectedIndex && !conn.isStartPoint;
-                                    }),
+                                       [this](const ArrowConnection &conn)
+                                       {
+                                           return conn.arrowIndex == selectedIndex && !conn.isStartPoint;
+                                       }),
                         arrowConnections.end());
 
                     // 记录新的连接关系
@@ -673,9 +675,10 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                     // 如果没找到连接目标，也要清除该箭头终点的所有现有连接
                     arrowConnections.erase(
                         std::remove_if(arrowConnections.begin(), arrowConnections.end(),
-                                    [this](const ArrowConnection &conn) {
-                                        return conn.arrowIndex == selectedIndex && !conn.isStartPoint;
-                                    }),
+                                       [this](const ArrowConnection &conn)
+                                       {
+                                           return conn.arrowIndex == selectedIndex && !conn.isStartPoint;
+                                       }),
                         arrowConnections.end());
                 }
             }
@@ -727,9 +730,10 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                     // 首先删除该箭头起点的所有现有连接
                     arrowConnections.erase(
                         std::remove_if(arrowConnections.begin(), arrowConnections.end(),
-                                    [this](const ArrowConnection &conn) {
-                                        return conn.arrowIndex == selectedIndex && conn.isStartPoint;
-                                    }),
+                                       [this](const ArrowConnection &conn)
+                                       {
+                                           return conn.arrowIndex == selectedIndex && conn.isStartPoint;
+                                       }),
                         arrowConnections.end());
 
                     // 记录新的连接关系
@@ -745,9 +749,10 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                     // 如果没找到连接目标，也要清除该箭头起点的所有现有连接
                     arrowConnections.erase(
                         std::remove_if(arrowConnections.begin(), arrowConnections.end(),
-                                    [this](const ArrowConnection &conn) {
-                                        return conn.arrowIndex == selectedIndex && conn.isStartPoint;
-                                    }),
+                                       [this](const ArrowConnection &conn)
+                                       {
+                                           return conn.arrowIndex == selectedIndex && conn.isStartPoint;
+                                       }),
                         arrowConnections.end());
                 }
             }
@@ -968,11 +973,11 @@ void DrawingArea::createContextMenu()
 {
     m_contextMenu = new QMenu(this);
 
-    QAction *copyAction = m_contextMenu->addAction("复制");
-    QAction *cutAction = m_contextMenu->addAction("剪切");
-    QAction *pasteAction = m_contextMenu->addAction("粘贴");
+    QAction *copyAction = m_contextMenu->addAction(tr("Copy"));
+    QAction *cutAction = m_contextMenu->addAction(tr("Cut"));
+    QAction *pasteAction = m_contextMenu->addAction(tr("Paste"));
     m_contextMenu->addSeparator();
-    QAction *deleteAction = m_contextMenu->addAction("删除");
+    QAction *deleteAction = m_contextMenu->addAction(tr("Delete"));
 
     // 根据是否有选中图形来设置菜单项的可用状态
     copyAction->setEnabled(selectedIndex != -1);
@@ -995,12 +1000,12 @@ void DrawingArea::contextMenuEvent(QContextMenuEvent *event)
     {
         for (QAction *action : m_contextMenu->actions())
         {
-            if (action->text() == "复制" || action->text() == "剪切" ||
-                action->text() == "删除")
+            if (action->text() == tr("Copy") || action->text() == tr("Cut") ||
+                action->text() == tr("Delete"))
             {
                 action->setEnabled(selectedIndex != -1);
             }
-            else if (action->text() == "粘贴")
+            else if (action->text() == tr("Paste"))
             {
                 action->setEnabled(m_clipboardShape != nullptr);
             }

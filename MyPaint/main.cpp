@@ -1,40 +1,43 @@
 #include "mainwindow.h"
+
 #include <QApplication>
-#include <QFont>
+#include <QTranslator>
+#include <QLocale>
+#include <QLibraryInfo>
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
-  QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
-  // 设置全局字体，确保中文显示正常
-  QFont font = QApplication::font();
-  font.setFamily("PingFang SC, Microsoft YaHei, SimHei, sans-serif"); // 使用适合中文的字体
-  font.setPointSize(11);                                              // 设置合适的字体大小
-  QApplication::setFont(font);
+    // 设置应用程序的语言环境为系统默认语言
+    QLocale locale = QLocale::system();
+    QLocale::setDefault(locale);
 
-  // 设置工具按钮样式
-  a.setStyleSheet(R"(
-QToolButton {
-    border: none;
-    background: transparent;
-    padding: 6px 15px;
-    color: #333333;
-    font-size: 12px;
-}
-QToolButton:hover {
-    background: #e6f0fa;
-}
-QToolButton:pressed {
-    background: #cce4f7;
-}
-QToolBar {
-    border: none;
-    spacing: 2px;
-    background-color: white;
-}
-)");
+    // 加载 Qt 内置翻译
+    QTranslator qtTranslator;
+    if (qtTranslator.load("qt_" + locale.name(),
+                          QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
+    {
+        app.installTranslator(&qtTranslator);
+    }
 
-  MainWindow w;
-  w.show();
-  return a.exec();
+    // 加载应用程序翻译
+    QTranslator translator;
+    QString qmPath = ":/translations/mypaint_" + locale.name();
+    qDebug() << "Loading translation from:" << qmPath;
+
+    if (translator.load(qmPath))
+    {
+        qDebug() << "Translation loaded successfully";
+        app.installTranslator(&translator);
+    }
+    else
+    {
+        qDebug() << "Failed to load translation";
+    }
+
+    MainWindow w;
+    w.show();
+    return app.exec();
 }

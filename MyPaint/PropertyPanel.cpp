@@ -60,8 +60,8 @@ void PropertyPanel::setupUI()
     setupShapeStyleTab();
 
     // 添加选项卡到选项卡控件
-    m_tabWidget->addTab(m_pageStyleTab, "页面样式");
-    m_tabWidget->addTab(m_shapeStyleTab, "图形样式");
+    m_tabWidget->addTab(m_pageStyleTab, tr("Page Style"));
+    m_tabWidget->addTab(m_shapeStyleTab, tr("Shape Style"));
 
     // 创建滚动区域
     QScrollArea *scrollArea = new QScrollArea(this);
@@ -80,11 +80,11 @@ void PropertyPanel::setupPageStyleTab()
     layout->setSpacing(10);
 
     // 背景设置
-    m_backgroundGroup = new QGroupBox("背景", m_pageStyleTab);
+    m_backgroundGroup = new QGroupBox(tr("Background"), m_pageStyleTab);
     QGridLayout *backgroundLayout = new QGridLayout(m_backgroundGroup);
 
     // 背景颜色
-    backgroundLayout->addWidget(new QLabel("颜色:"), 0, 0);
+    backgroundLayout->addWidget(new QLabel(tr("Color:")), 0, 0);
     m_bgColorButton = new QPushButton();
     m_bgColor = Qt::white; // 默认白色背景
     updateButtonStyle(m_bgColorButton, m_bgColor);
@@ -93,16 +93,16 @@ void PropertyPanel::setupPageStyleTab()
     layout->addWidget(m_backgroundGroup);
 
     // 尺寸设置
-    m_sizeGroup = new QGroupBox("尺寸", m_pageStyleTab);
+    m_sizeGroup = new QGroupBox(tr("Size"), m_pageStyleTab);
     QGridLayout *sizeLayout = new QGridLayout(m_sizeGroup);
 
     // 尺寸类型选择
     sizeLayout->addWidget(new QLabel(""), 0, 0); // 占位
     m_sizeTypeCombo = new QComboBox();
-    m_sizeTypeCombo->addItem("自定义尺寸(1215px*614px)");
-    m_sizeTypeCombo->addItem("A3 Size (1500px*2100px)");
-    m_sizeTypeCombo->addItem("A4 Size (1050px*1500px)");
-    m_sizeTypeCombo->addItem("A5 Size (750px*1050px)");
+    m_sizeTypeCombo->addItem(tr("Custom Size (1215px*614px)"));
+    m_sizeTypeCombo->addItem(tr("A3 Size (1500px*2100px)"));
+    m_sizeTypeCombo->addItem(tr("A4 Size (1050px*1500px)"));
+    m_sizeTypeCombo->addItem(tr("A5 Size (750px*1050px)"));
     sizeLayout->addWidget(m_sizeTypeCombo, 0, 1, 1, 3);
 
     // 宽度和高度输入框
@@ -112,18 +112,18 @@ void PropertyPanel::setupPageStyleTab()
     m_pageSizeWidthSpinBox->setRange(100, 5000);
     m_pageSizeWidthSpinBox->setValue(1215);
     m_pageSizeWidthSpinBox->setSuffix("px");
-    QLabel *widthLabel = new QLabel("宽");
+    QLabel *widthLabel = new QLabel(tr("Width"));
 
     // 添加交换按钮
     QToolButton *swapDimensionsButton = new QToolButton();
     swapDimensionsButton->setText("⇄");
-    swapDimensionsButton->setToolTip("交换宽高");
+    swapDimensionsButton->setToolTip(tr("Swap Width/Height"));
 
     m_pageSizeHeightSpinBox = new QSpinBox();
     m_pageSizeHeightSpinBox->setRange(100, 5000);
     m_pageSizeHeightSpinBox->setValue(614);
     m_pageSizeHeightSpinBox->setSuffix("px");
-    QLabel *heightLabel = new QLabel("高");
+    QLabel *heightLabel = new QLabel(tr("Height"));
 
     sizeDimensionsLayout->addWidget(m_pageSizeWidthSpinBox);
     sizeDimensionsLayout->addWidget(widthLabel);
@@ -136,24 +136,24 @@ void PropertyPanel::setupPageStyleTab()
     layout->addWidget(m_sizeGroup);
 
     // 网格设置
-    m_gridGroup = new QGroupBox("网格", m_pageStyleTab);
+    m_gridGroup = new QGroupBox(tr("Grid"), m_pageStyleTab);
     QGridLayout *gridLayout = new QGridLayout(m_gridGroup);
 
     // 显示网格复选框
-    m_showGridCheckBox = new QCheckBox("显示网格");
+    m_showGridCheckBox = new QCheckBox(tr("Show Grid"));
     m_showGridCheckBox->setChecked(true); // 默认选中
     gridLayout->addWidget(m_showGridCheckBox, 0, 0, 1, 2);
 
     // 网格大小
-    gridLayout->addWidget(new QLabel("网格大小:"), 1, 0);
+    gridLayout->addWidget(new QLabel(tr("Grid Size:")), 1, 0);
     m_gridSizeCombo = new QComboBox();
-    m_gridSizeCombo->addItem("正常");
-    m_gridSizeCombo->addItem("较大");
-    m_gridSizeCombo->addItem("较小");
+    m_gridSizeCombo->addItem(tr("Normal"));
+    m_gridSizeCombo->addItem(tr("Large"));
+    m_gridSizeCombo->addItem(tr("Small"));
     gridLayout->addWidget(m_gridSizeCombo, 1, 1);
 
     // 网格尺寸
-    gridLayout->addWidget(new QLabel("网格尺寸:"), 2, 0);
+    gridLayout->addWidget(new QLabel(tr("Grid Size:")), 2, 0);
     m_gridSizeSpinBox = new QSpinBox();
     m_gridSizeSpinBox->setRange(5, 100);
     m_gridSizeSpinBox->setValue(15);
@@ -172,14 +172,14 @@ void PropertyPanel::setupShapeStyleTab()
 
     // 图形类型和不透明度
     QHBoxLayout *typeLayout = new QHBoxLayout();
-    typeLayout->addWidget(new QLabel("类型:"));
+    typeLayout->addWidget(new QLabel(tr("Type:")));
     // 使用标签替代下拉框，只用于展示当前类型
-    m_shapeTypeLabel = new QLabel("矩形");
+    m_shapeTypeLabel = new QLabel(tr("Rectangle"));
     typeLayout->addWidget(m_shapeTypeLabel);
     layout->addLayout(typeLayout);
 
     QHBoxLayout *opacityLayout = new QHBoxLayout();
-    opacityLayout->addWidget(new QLabel("不透明度:"));
+    opacityLayout->addWidget(new QLabel(tr("Opacity:")));
     m_opacitySpinBox = new QDoubleSpinBox();
     m_opacitySpinBox->setMinimum(0);
     m_opacitySpinBox->setMaximum(100);
@@ -189,16 +189,16 @@ void PropertyPanel::setupShapeStyleTab()
     layout->addLayout(opacityLayout);
 
     // 布局部分
-    m_layoutGroup = new QGroupBox("布局", m_shapeStyleTab);
+    m_layoutGroup = new QGroupBox(tr("Layout"), m_shapeStyleTab);
     QGridLayout *layoutGroupLayout = new QGridLayout(m_layoutGroup);
 
-    layoutGroupLayout->addWidget(new QLabel("宽:"), 0, 0);
+    layoutGroupLayout->addWidget(new QLabel(tr("Width:")), 0, 0);
     m_widthSpinBox = new QSpinBox();
     m_widthSpinBox->setRange(1, 9999);
     m_widthSpinBox->setSuffix("px");
     layoutGroupLayout->addWidget(m_widthSpinBox, 0, 1);
 
-    layoutGroupLayout->addWidget(new QLabel("高:"), 0, 2);
+    layoutGroupLayout->addWidget(new QLabel(tr("Height:")), 0, 2);
     m_heightSpinBox = new QSpinBox();
     m_heightSpinBox->setRange(1, 9999);
     m_heightSpinBox->setSuffix("px");
@@ -216,7 +216,7 @@ void PropertyPanel::setupShapeStyleTab()
     m_yPosSpinBox->setSuffix("px");
     layoutGroupLayout->addWidget(m_yPosSpinBox, 1, 3);
 
-    layoutGroupLayout->addWidget(new QLabel("角度:"), 2, 0);
+    layoutGroupLayout->addWidget(new QLabel(tr("Angle:")), 2, 0);
     m_rotationSpinBox = new QDoubleSpinBox();
     m_rotationSpinBox->setRange(0, 360);
     m_rotationSpinBox->setSuffix("°");
@@ -226,19 +226,19 @@ void PropertyPanel::setupShapeStyleTab()
     QHBoxLayout *rotationBtnsLayout = new QHBoxLayout();
     m_rotateLeftBtn = new QToolButton();
     m_rotateLeftBtn->setText("←");
-    m_rotateLeftBtn->setToolTip("向左旋转");
+    m_rotateLeftBtn->setToolTip(tr("Rotate Left"));
 
     m_vFlipButton = new QToolButton();
     m_vFlipButton->setText("↕");
-    m_vFlipButton->setToolTip("垂直翻转（角度设为0）");
+    m_vFlipButton->setToolTip(tr("Vertical Flip (Set angle to 0)"));
 
     m_hFlipButton = new QToolButton();
     m_hFlipButton->setText("↔");
-    m_hFlipButton->setToolTip("水平翻转（角度设为90）");
+    m_hFlipButton->setToolTip(tr("Horizontal Flip (Set angle to 90)"));
 
     m_rotateRightBtn = new QToolButton();
     m_rotateRightBtn->setText("→");
-    m_rotateRightBtn->setToolTip("向右旋转");
+    m_rotateRightBtn->setToolTip(tr("Rotate Right"));
 
     rotationBtnsLayout->addWidget(m_rotateLeftBtn);
     rotationBtnsLayout->addWidget(m_vFlipButton);
@@ -250,19 +250,19 @@ void PropertyPanel::setupShapeStyleTab()
     layout->addWidget(m_layoutGroup);
 
     // 字体部分
-    m_fontGroup = new QGroupBox("字体字号", m_shapeStyleTab);
+    m_fontGroup = new QGroupBox(tr("Font and Size"), m_shapeStyleTab);
     QGridLayout *fontGroupLayout = new QGridLayout(m_fontGroup);
 
-    fontGroupLayout->addWidget(new QLabel("字体:"), 0, 0);
+    fontGroupLayout->addWidget(new QLabel(tr("Font:")), 0, 0);
     m_fontFamilyCombo = new QComboBox();
-    m_fontFamilyCombo->addItem("微软雅黑");
-    m_fontFamilyCombo->addItem("宋体");
+    m_fontFamilyCombo->addItem("Microsoft YaHei");
+    m_fontFamilyCombo->addItem("SimSun");
     m_fontFamilyCombo->addItem("Arial");
     fontGroupLayout->addWidget(m_fontFamilyCombo, 0, 1, 1, 3);
 
     // 文字颜色按钮
     QHBoxLayout *textColorLayout = new QHBoxLayout();
-    textColorLayout->addWidget(new QLabel("文字颜色:"));
+    textColorLayout->addWidget(new QLabel(tr("Text Color:")));
     m_textColorButton = new QPushButton();
     m_textColor = Qt::black; // 默认黑色
     updateButtonStyle(m_textColorButton, m_textColor);
@@ -284,19 +284,19 @@ void PropertyPanel::setupShapeStyleTab()
     QHBoxLayout *alignLayout = new QHBoxLayout();
 
     // 水平对齐方式
-    alignLayout->addWidget(new QLabel("水平对齐:"));
+    alignLayout->addWidget(new QLabel(tr("Horizontal Align:")));
     m_hAlignCombo = new QComboBox();
-    m_hAlignCombo->addItem("居左");
-    m_hAlignCombo->addItem("居中");
-    m_hAlignCombo->addItem("居右");
+    m_hAlignCombo->addItem(tr("Left"));
+    m_hAlignCombo->addItem(tr("Center"));
+    m_hAlignCombo->addItem(tr("Right"));
     alignLayout->addWidget(m_hAlignCombo);
 
     // 垂直对齐方式
-    alignLayout->addWidget(new QLabel("垂直对齐:"));
+    alignLayout->addWidget(new QLabel(tr("Vertical Align:")));
     m_vAlignCombo = new QComboBox();
-    m_vAlignCombo->addItem("居上");
-    m_vAlignCombo->addItem("居中");
-    m_vAlignCombo->addItem("居下");
+    m_vAlignCombo->addItem(tr("Top"));
+    m_vAlignCombo->addItem(tr("Middle"));
+    m_vAlignCombo->addItem(tr("Bottom"));
     alignLayout->addWidget(m_vAlignCombo);
 
     fontGroupLayout->addLayout(alignLayout, 2, 0, 1, 4);
@@ -307,22 +307,22 @@ void PropertyPanel::setupShapeStyleTab()
     m_boldButton = new QToolButton();
     m_boldButton->setText("B");
     m_boldButton->setCheckable(true);
-    m_boldButton->setToolTip("加粗");
+    m_boldButton->setToolTip(tr("Bold"));
 
     m_italicButton = new QToolButton();
     m_italicButton->setText("I");
     m_italicButton->setCheckable(true);
-    m_italicButton->setToolTip("斜体");
+    m_italicButton->setToolTip(tr("Italic"));
 
     m_underlineButton = new QToolButton();
     m_underlineButton->setText("U");
     m_underlineButton->setCheckable(true);
-    m_underlineButton->setToolTip("下划线");
+    m_underlineButton->setToolTip(tr("Underline"));
 
     m_strikeoutButton = new QToolButton();
     m_strikeoutButton->setText("S");
     m_strikeoutButton->setCheckable(true);
-    m_strikeoutButton->setToolTip("中划线");
+    m_strikeoutButton->setToolTip(tr("Strikethrough"));
 
     textStyleLayout->addWidget(m_boldButton);
     textStyleLayout->addWidget(m_italicButton);
@@ -336,13 +336,13 @@ void PropertyPanel::setupShapeStyleTab()
     layout->addWidget(m_fontGroup);
 
     // 填充部分
-    m_fillGroup = new QGroupBox("填充", m_shapeStyleTab);
+    m_fillGroup = new QGroupBox(tr("Fill"), m_shapeStyleTab);
     QGridLayout *fillGroupLayout = new QGridLayout(m_fillGroup);
 
     m_fillTypeCombo = new QComboBox();
-    m_fillTypeCombo->addItem("纯色");
-    m_fillTypeCombo->addItem("无填充");
-    m_fillTypeCombo->addItem("渐变");
+    m_fillTypeCombo->addItem(tr("Solid Color"));
+    m_fillTypeCombo->addItem(tr("No Fill"));
+    m_fillTypeCombo->addItem(tr("Gradient"));
     fillGroupLayout->addWidget(m_fillTypeCombo, 0, 0, 1, 2);
 
     m_fillColorButton = new QPushButton();
@@ -353,23 +353,23 @@ void PropertyPanel::setupShapeStyleTab()
     layout->addWidget(m_fillGroup);
 
     // 线条部分
-    m_lineGroup = new QGroupBox("线条", m_shapeStyleTab);
+    m_lineGroup = new QGroupBox(tr("Line"), m_shapeStyleTab);
     QGridLayout *lineGroupLayout = new QGridLayout(m_lineGroup);
 
-    lineGroupLayout->addWidget(new QLabel("线条颜色:"), 0, 0);
+    lineGroupLayout->addWidget(new QLabel(tr("Line Color:")), 0, 0);
     m_lineColorButton = new QPushButton();
     m_lineColor = Qt::black;
     updateButtonStyle(m_lineColorButton, m_lineColor);
     lineGroupLayout->addWidget(m_lineColorButton, 0, 1, 1, 3);
 
-    lineGroupLayout->addWidget(new QLabel("线条类型:"), 1, 0);
+    lineGroupLayout->addWidget(new QLabel(tr("Line Type:")), 1, 0);
     m_lineTypeCombo = new QComboBox();
-    m_lineTypeCombo->addItem("实线");
-    m_lineTypeCombo->addItem("虚线");
-    m_lineTypeCombo->addItem("点线");
+    m_lineTypeCombo->addItem(tr("Solid"));
+    m_lineTypeCombo->addItem(tr("Dashed"));
+    m_lineTypeCombo->addItem(tr("Dotted"));
     lineGroupLayout->addWidget(m_lineTypeCombo, 1, 1, 1, 3);
 
-    lineGroupLayout->addWidget(new QLabel("线条粗细:"), 2, 0);
+    lineGroupLayout->addWidget(new QLabel(tr("Line Width:")), 2, 0);
     m_lineWidthSpinBox = new QDoubleSpinBox();
     m_lineWidthSpinBox->setRange(0.5, 10.0);
     m_lineWidthSpinBox->setValue(1.5);
@@ -377,25 +377,25 @@ void PropertyPanel::setupShapeStyleTab()
     lineGroupLayout->addWidget(m_lineWidthSpinBox, 2, 1, 1, 3);
 
     // 箭头选项（仅用于箭头图形）
-    lineGroupLayout->addWidget(new QLabel("箭头类型:"), 3, 0);
+    lineGroupLayout->addWidget(new QLabel(tr("Arrow Type:")), 3, 0);
     m_startArrowCombo = new QComboBox();
-    m_startArrowCombo->addItem("无");
-    m_startArrowCombo->addItem("标准");
-    m_startArrowCombo->addItem("三角");
+    m_startArrowCombo->addItem(tr("None"));
+    m_startArrowCombo->addItem(tr("Standard"));
+    m_startArrowCombo->addItem(tr("Triangle"));
     lineGroupLayout->addWidget(m_startArrowCombo, 3, 1);
 
     m_endArrowCombo = new QComboBox();
-    m_endArrowCombo->addItem("无");
-    m_endArrowCombo->addItem("标准");
-    m_endArrowCombo->addItem("三角");
+    m_endArrowCombo->addItem(tr("None"));
+    m_endArrowCombo->addItem(tr("Standard"));
+    m_endArrowCombo->addItem(tr("Triangle"));
     lineGroupLayout->addWidget(m_endArrowCombo, 3, 2);
 
     // 连接线类型
-    lineGroupLayout->addWidget(new QLabel("连接线类型:"), 4, 0);
+    lineGroupLayout->addWidget(new QLabel(tr("Connection Type:")), 4, 0);
     m_connectionTypeCombo = new QComboBox();
-    m_connectionTypeCombo->addItem("直线");
-    m_connectionTypeCombo->addItem("折线");
-    m_connectionTypeCombo->addItem("曲线");
+    m_connectionTypeCombo->addItem(tr("Straight"));
+    m_connectionTypeCombo->addItem(tr("Segmented"));
+    m_connectionTypeCombo->addItem(tr("Curved"));
     lineGroupLayout->addWidget(m_connectionTypeCombo, 4, 1, 1, 3);
 
     layout->addWidget(m_lineGroup);
@@ -507,7 +507,7 @@ void PropertyPanel::setupConnections()
     // 连接填充颜色按钮
     connect(m_fillColorButton, &QPushButton::clicked, this, [this]()
             {
-        QColor color = QColorDialog::getColor(m_fillColor, this, "选择填充颜色");
+        QColor color = QColorDialog::getColor(m_fillColor, this, tr("Select Fill Color"));
         if (color.isValid()) {
             m_fillColor = color;
             updateButtonStyle(m_fillColorButton, color);
@@ -520,7 +520,7 @@ void PropertyPanel::setupConnections()
     // 连接线条颜色按钮
     connect(m_lineColorButton, &QPushButton::clicked, this, [this]()
             {
-        QColor color = QColorDialog::getColor(m_lineColor, this, "选择线条颜色");
+        QColor color = QColorDialog::getColor(m_lineColor, this, tr("Select Line Color"));
         if (color.isValid()) {
             m_lineColor = color;
             updateButtonStyle(m_lineColorButton, color);
@@ -606,7 +606,7 @@ void PropertyPanel::setupConnections()
     // 连接文字颜色按钮
     connect(m_textColorButton, &QPushButton::clicked, this, [this]()
             {
-        QColor color = QColorDialog::getColor(m_textColor, this, "选择文字颜色");
+        QColor color = QColorDialog::getColor(m_textColor, this, tr("Select Text Color"));
         if (color.isValid()) {
             m_textColor = color;
             updateButtonStyle(m_textColorButton, color);
@@ -628,7 +628,7 @@ void PropertyPanel::setupPageStyleConnections()
     // 背景颜色按钮点击事件
     connect(m_bgColorButton, &QPushButton::clicked, this, [this]()
             {
-        QColor color = QColorDialog::getColor(m_bgColor, this, "选择背景颜色");
+        QColor color = QColorDialog::getColor(m_bgColor, this, tr("Select Background Color"));
         if (color.isValid() && m_drawingArea) {
             m_bgColor = color;
             updateButtonStyle(m_bgColorButton, color);
@@ -643,7 +643,7 @@ void PropertyPanel::setupPageStyleConnections()
             
         // 根据选择的尺寸类型设置页面大小
         switch (index) {
-            case 0: // 自定义尺寸
+            case 0: // Custom Size
                 m_pageSizeWidthSpinBox->setValue(1215);
                 m_pageSizeHeightSpinBox->setValue(614);
                 break;
@@ -708,13 +708,13 @@ void PropertyPanel::setupPageStyleConnections()
         // 根据选择的网格大小设置网格尺寸
         int size;
         switch (index) {
-            case 0: // 正常
+            case 0: // Normal
                 size = 15;
                 break;
-            case 1: // 较大
+            case 1: // Large
                 size = 25;
                 break;
-            case 2: // 较小
+            case 2: // Small
                 size = 8;
                 break;
             default:
@@ -774,19 +774,19 @@ void PropertyPanel::updateShapeProperties(ShapeBase *shape)
     // 根据图形类型更新图形类型标签
     if (dynamic_cast<ShapeRect *>(shape))
     {
-        m_shapeTypeLabel->setText("矩形");
+        m_shapeTypeLabel->setText(tr("Rectangle"));
     }
     else if (dynamic_cast<ShapeEllipse *>(shape))
     {
-        m_shapeTypeLabel->setText("椭圆");
+        m_shapeTypeLabel->setText(tr("Ellipse"));
     }
     else if (dynamic_cast<ShapeArrow *>(shape))
     {
-        m_shapeTypeLabel->setText("箭头");
+        m_shapeTypeLabel->setText(tr("Arrow"));
     }
     else if (dynamic_cast<ShapePolygon *>(shape))
     {
-        m_shapeTypeLabel->setText("多边形");
+        m_shapeTypeLabel->setText(tr("Polygon"));
     }
 
     // 更新宽度、高度和位置
@@ -996,11 +996,11 @@ void PropertyPanel::updateGridSizeUI(int size)
         // 更新网格大小下拉框
         m_gridSizeCombo->blockSignals(true);
         if (size == 15)
-            m_gridSizeCombo->setCurrentIndex(0); // 正常
+            m_gridSizeCombo->setCurrentIndex(0); // Normal
         else if (size == 25)
-            m_gridSizeCombo->setCurrentIndex(1); // 较大
+            m_gridSizeCombo->setCurrentIndex(1); // Large
         else if (size == 8)
-            m_gridSizeCombo->setCurrentIndex(2); // 较小
+            m_gridSizeCombo->setCurrentIndex(2); // Small
         else
         {
             // 对于其他尺寸，保持当前选择状态

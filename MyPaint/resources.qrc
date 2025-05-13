@@ -1,5 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <RCC>
-<qresource prefix="/">
-<file>styles/tabstyle.css</file>
-</qresource>
+    <qresource prefix="/">
+        <file>translations/mypaint_zh_CN.qm</file>
+    </qresource>
 </RCC>

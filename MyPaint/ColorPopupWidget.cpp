@@ -1,6 +1,5 @@
 #include "ColorPopupWidget.h"
 #include <QApplication>
-#include <QDebug>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
