@@ -5,5 +5,6 @@
 <file>icons/arrow.png</file>
 <file>icons/pentagon.png</file>
 <file>icons/triangle.png</file>
+<file>icons/diamond.png</file>
 </qresource>
 </RCC>

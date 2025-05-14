@@ -51,6 +51,7 @@ void ShapeLibraryWidget::initShapeItems()
   addShapeItem(tr("Rectangle"), "rect");
   addShapeItem(tr("Ellipse"), "ellipse");
   addShapeItem(tr("Triangle"), "triangle");
+  addShapeItem(tr("Diamond"), "diamond");
   addShapeItem(tr("Pentagon"), "pentagon");
   // addShapeItem("Polygon", "polygon");
   addShapeItem(tr("Arrow"), "arrow");
@@ -140,7 +141,7 @@ void ShapeLibraryWidget::enableToolTips()
   );
 }
 
-void ShapeLibraryWidget::setDrawingArea(DrawingArea* drawingArea)
+void ShapeLibraryWidget::setDrawingArea(DrawingArea *drawingArea)
 {
   m_drawingArea = drawingArea;
 }

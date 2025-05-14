@@ -137,6 +137,10 @@ bool DrawingArea::loadFromFile(const QString &fileName)
         {
             shape = ShapeFactory::createTriangle(QRect());
         }
+        else if (type == "diamond")
+        {
+            shape = ShapeFactory::createDiamond(QRect());
+        }
         // else if (shapeType == "polygon") {
         //     // 待实现
         // }
@@ -993,6 +997,10 @@ void DrawingArea::dropEvent(QDropEvent *event)
         else if (shapeType == "triangle")
         {
             shape = ShapeFactory::createTriangle(defaultRect);
+        }
+        else if (shapeType == "diamond")
+        {
+            shape = ShapeFactory::createDiamond(defaultRect);
         }
         else if (shapeType == "arrow")
         {

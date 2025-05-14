@@ -7,6 +7,7 @@
 #include "ShapeRect.h"
 #include "ShapePentagon.h"
 #include "ShapeTriangle.h"
+#include "ShapeDiamond.h"
 #include <memory>
 
 class ShapeFactory
@@ -31,6 +32,10 @@ public:
   static std::unique_ptr<ShapeBase> createTriangle(const QRect &rect)
   {
     return std::unique_ptr<ShapeBase>(new ShapeTriangle(rect));
+  }
+  static std::unique_ptr<ShapeBase> createDiamond(const QRect &rect)
+  {
+    return std::unique_ptr<ShapeBase>(new ShapeDiamond(rect));
   }
 };
 
