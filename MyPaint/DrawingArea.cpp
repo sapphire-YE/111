@@ -389,7 +389,10 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
                             QLine arrowLine(anchorPos, docPos);
                             std::unique_ptr<ShapeBase> arrow = ShapeFactory::createArrow(arrowLine);
 
-                            // 添加到图形列表并选中
+                            // 存储当前选中图形的索引(创建新箭头前)
+                            int originalSelectedIndex = selectedIndex;
+
+                            // 添加到图形列表并选中新箭头
                             shapes.push_back(std::move(arrow));
                             selectedIndex = shapes.size() - 1;
 
@@ -403,26 +406,24 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
                                 arrowShape->setSelectedHandleIndex(1); // 选中终点锚点
 
                                 // 记录ArrowAnchor的信息，等待释放鼠标时创建连接
-                                snappedHandle = {static_cast<int>(selectedIndex - 1), arrowAnchorIndex, anchorPos};
-
-                                int prevShapeIndex = selectedIndex - 1;
+                                snappedHandle = {originalSelectedIndex, arrowAnchorIndex, anchorPos};
 
                                 // 创建新的连接关系
                                 ArrowConnection connection;
-                                connection.arrowIndex = selectedIndex;
-                                connection.shapeIndex = prevShapeIndex; // 连接到前一个图形
+                                connection.arrowIndex = shapes.size() - 1;     // 新箭头的索引
+                                connection.shapeIndex = originalSelectedIndex; // 连接到原始选中的图形
                                 connection.handleIndex = arrowAnchorIndex;
                                 connection.isStartPoint = true; // 箭头的起点
                                 arrowConnections.push_back(connection);
 
                                 // 确保起点锚点正确
-                                const auto &anchors = shapes[prevShapeIndex]->getArrowAnchors();
+                                const auto &anchors = shapes[originalSelectedIndex]->getArrowAnchors();
                                 if (arrowAnchorIndex < anchors.size())
                                 {
                                     QPoint anchorPos = anchors[arrowAnchorIndex].rect.center();
                                     arrowShape->setP1(anchorPos);
                                     lastMousePos = docPos;
-                                    updateConnectedArrows(prevShapeIndex, QPoint());
+                                    updateConnectedArrows(originalSelectedIndex, QPoint());
                                 }
                             }
 
