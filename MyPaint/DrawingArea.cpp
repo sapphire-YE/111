@@ -141,6 +141,10 @@ bool DrawingArea::loadFromFile(const QString &fileName)
         {
             shape = ShapeFactory::createDiamond(QRect());
         }
+        else if (type == "roundedrect")
+        {
+            shape = ShapeFactory::createRoundedRect(QRect());
+        }
         // else if (shapeType == "polygon") {
         //     // 待实现
         // }
@@ -1006,6 +1010,10 @@ void DrawingArea::dropEvent(QDropEvent *event)
         {
             QLine line(pos.x() - 40, pos.y(), pos.x() + 40, pos.y());
             shape = ShapeFactory::createArrow(line);
+        }
+        else if (shapeType == "roundedrect")
+        {
+            shape = ShapeFactory::createRoundedRect(defaultRect);
         }
 
         if (shape)

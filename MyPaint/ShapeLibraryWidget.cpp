@@ -49,6 +49,7 @@ void ShapeLibraryWidget::initShapeItems()
 {
   // 添加基本图形
   addShapeItem(tr("Rectangle"), "rect");
+  addShapeItem(tr("Rounded Rect"), "roundedrect");
   addShapeItem(tr("Ellipse"), "ellipse");
   addShapeItem(tr("Triangle"), "triangle");
   addShapeItem(tr("Diamond"), "diamond");
