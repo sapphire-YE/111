@@ -5,6 +5,8 @@
 #include "ShapeBase.h"
 #include "ShapeEllipse.h"
 #include "ShapeRect.h"
+#include "ShapePentagon.h"
+#include "ShapeTriangle.h"
 #include <memory>
 
 class ShapeFactory
@@ -21,6 +23,14 @@ public:
   static std::unique_ptr<ShapeBase> createArrow(const QLine &line)
   {
     return std::unique_ptr<ShapeBase>(new ShapeArrow(line));
+  }
+  static std::unique_ptr<ShapeBase> createPentagon(const QRect &rect)
+  {
+    return std::unique_ptr<ShapeBase>(new ShapePentagon(rect));
+  }
+  static std::unique_ptr<ShapeBase> createTriangle(const QRect &rect)
+  {
+    return std::unique_ptr<ShapeBase>(new ShapeTriangle(rect));
   }
 };
 

@@ -3,5 +3,7 @@
 <file>icons/rect.png</file>
 <file>icons/ellipse.png</file>
 <file>icons/arrow.png</file>
+<file>icons/pentagon.png</file>
+<file>icons/triangle.png</file>
 </qresource>
 </RCC>

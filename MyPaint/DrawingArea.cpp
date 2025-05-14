@@ -129,6 +129,17 @@ bool DrawingArea::loadFromFile(const QString &fileName)
         {
             shape = ShapeFactory::createArrow(QLine());
         }
+        else if (type == "pentagon")
+        {
+            shape = ShapeFactory::createPentagon(QRect());
+        }
+        else if (type == "triangle")
+        {
+            shape = ShapeFactory::createTriangle(QRect());
+        }
+        // else if (shapeType == "polygon") {
+        //     // 待实现
+        // }
 
         if (shape)
         {
@@ -962,9 +973,14 @@ void DrawingArea::dropEvent(QDropEvent *event)
         {
             shape = ShapeFactory::createEllipse(defaultRect);
         }
-        // else if (shapeType == "polygon") {
-        //     // 待实现
-        // }
+        else if (shapeType == "pentagon")
+        {
+            shape = ShapeFactory::createPentagon(defaultRect);
+        }
+        else if (shapeType == "triangle")
+        {
+            shape = ShapeFactory::createTriangle(defaultRect);
+        }
         else if (shapeType == "arrow")
         {
             QLine line(pos.x() - 40, pos.y(), pos.x() + 40, pos.y());

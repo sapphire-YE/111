@@ -49,7 +49,7 @@ ColorPopupWidget::ColorPopupWidget(QWidget *parent) : QWidget(parent)
   mainLayout->setContentsMargins(12, 12, 12, 12);
 
   // 系统色块标题
-  QLabel *sysLabel = new QLabel("System Colors", this);
+  QLabel *sysLabel = new QLabel(tr("System Colors"), this);
   mainLayout->addWidget(sysLabel);
 
   // 色块网格
@@ -70,7 +70,7 @@ ColorPopupWidget::ColorPopupWidget(QWidget *parent) : QWidget(parent)
   mainLayout->addLayout(grid);
 
   // 最近使用
-  QLabel *recentLabel = new QLabel("Recent Colors", this);
+  QLabel *recentLabel = new QLabel(tr("Recent Colors"), this);
   mainLayout->addWidget(recentLabel);
 
   QHBoxLayout *recentLayout = new QHBoxLayout;
@@ -102,9 +102,9 @@ ColorPopupWidget::ColorPopupWidget(QWidget *parent) : QWidget(parent)
   hexLabel->setPixmap(arrowPixmap);
   hexLabel->setFixedSize(arrowPixmap.size());
   m_hexEdit = new QLineEdit(this);
-  m_hexEdit->setPlaceholderText("Enter color code");
+  m_hexEdit->setPlaceholderText(tr("Enter color code"));
   m_hexEdit->setMaxLength(6);
-  m_hexEdit->setFixedWidth(80);
+  m_hexEdit->setFixedWidth(120);
   m_hexEdit->setValidator(
       new QRegExpValidator(QRegExp("[0-9A-Fa-f]{6}"), this));
   connect(m_hexEdit, &QLineEdit::editingFinished, this,
