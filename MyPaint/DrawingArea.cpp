@@ -171,17 +171,19 @@ void DrawingArea::clear()
     arrowConnections.clear();
     selectedIndex = -1;
     snappedHandle = SnapInfo();
-    
+
     // 清空撤销重做栈
-    while (!m_undoStack.empty()) {
+    while (!m_undoStack.empty())
+    {
         m_undoStack.pop();
     }
-    while (!m_redoStack.empty()) {
+    while (!m_redoStack.empty())
+    {
         m_redoStack.pop();
     }
     emit canUndoChanged(false);
     emit canRedoChanged(false);
-    
+
     update();
 }
 
@@ -390,7 +392,7 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
                             // 添加到图形列表并选中
                             shapes.push_back(std::move(arrow));
                             selectedIndex = shapes.size() - 1;
-                            
+
                             // 记录添加图形到历史
                             recordAddShape(selectedIndex);
 
@@ -408,9 +410,9 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
                                 // 创建新的连接关系
                                 ArrowConnection connection;
                                 connection.arrowIndex = selectedIndex;
-                                connection.shapeIndex = prevShapeIndex;  // 连接到前一个图形
+                                connection.shapeIndex = prevShapeIndex; // 连接到前一个图形
                                 connection.handleIndex = arrowAnchorIndex;
-                                connection.isStartPoint = true;  // 箭头的起点
+                                connection.isStartPoint = true; // 箭头的起点
                                 arrowConnections.push_back(connection);
 
                                 // 确保起点锚点正确
@@ -435,13 +437,14 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
                 {
                     // 处理其他类型的锚点，使用原有逻辑
                     shapes[selectedIndex]->setSelectedHandleIndex(i);
-                    
+
                     // 如果是缩放锚点，记录原始大小
-                    if (handles[i].type == ShapeBase::Handle::Scale) {
+                    if (handles[i].type == ShapeBase::Handle::Scale)
+                    {
                         resizing = true;
                         originalRect = shapes[selectedIndex]->getRect();
                     }
-                    
+
                     lastMousePos = docPos; // 保存文档坐标
                     dragging = true;
                     update();
@@ -461,11 +464,11 @@ void DrawingArea::mousePressEvent(QMouseEvent *event)
         {
             selectedIndex = i;
             lastMousePos = docPos; // 保存文档坐标
-            
+
             // 记录按下时的起始位置，用于计算总移动距离
             m_moveStartPos = docPos;
             dragging = true;
-            
+
             update();
 
             // 发出选中图形信号
@@ -686,10 +689,10 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                     // 清除终点的已有连接
                     arrowConnections.erase(
                         std::remove_if(arrowConnections.begin(), arrowConnections.end(),
-                                   [this](const ArrowConnection &conn)
-                                   {
-                                       return conn.arrowIndex == selectedIndex && !conn.isStartPoint;
-                                   }),
+                                       [this](const ArrowConnection &conn)
+                                       {
+                                           return conn.arrowIndex == selectedIndex && !conn.isStartPoint;
+                                       }),
                         arrowConnections.end());
 
                     // 添加新的终点连接
@@ -753,10 +756,10 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
                     // 清除起点的已有连接
                     arrowConnections.erase(
                         std::remove_if(arrowConnections.begin(), arrowConnections.end(),
-                                   [this](const ArrowConnection &conn)
-                                   {
-                                       return conn.arrowIndex == selectedIndex && conn.isStartPoint;
-                                   }),
+                                       [this](const ArrowConnection &conn)
+                                       {
+                                           return conn.arrowIndex == selectedIndex && conn.isStartPoint;
+                                       }),
                         arrowConnections.end());
 
                     // 添加新的起点连接
@@ -774,37 +777,42 @@ void DrawingArea::mouseReleaseEvent(QMouseEvent *event)
 
             // 清除箭头的选中状态
             arrow->clearHandleSelection();
-            
+
             // 发送选中图形信号确保属性面板更新
-            if (selectedIndex != -1) {
+            if (selectedIndex != -1)
+            {
                 emit shapeSelected(shapes[selectedIndex].get());
             }
         }
         else
         {
             // 如果拖拽结束，且是移动操作（非调整大小）
-            if (dragging && !shapes[selectedIndex]->isHandleSelected()) {
+            if (dragging && !shapes[selectedIndex]->isHandleSelected())
+            {
                 // 计算从按下鼠标时到释放的总移动距离
                 QPoint totalDelta = docPos - m_moveStartPos;
-                
+
                 // 只有当真实移动了一定距离时才记录移动操作
-                if (totalDelta.manhattanLength() > 0) {
+                if (totalDelta.manhattanLength() > 0)
+                {
                     // 记录移动操作
                     recordMoveShape(selectedIndex, totalDelta);
                 }
             }
             // 如果是调整大小操作结束
-            else if (resizing && shapes[selectedIndex]->isHandleSelected()) {
+            else if (resizing && shapes[selectedIndex]->isHandleSelected())
+            {
                 QRect newRect = shapes[selectedIndex]->getRect();
-                if (newRect != originalRect) {
+                if (newRect != originalRect)
+                {
                     // 记录调整大小操作
                     recordResizeShape(selectedIndex, originalRect, newRect);
                 }
                 resizing = false;
             }
-            
+
             shapes[selectedIndex]->clearHandleSelection();
-            
+
             // 释放鼠标后重新发送选中图形信号，确保属性面板更新
             emit shapeSelected(shapes[selectedIndex].get());
         }
@@ -904,14 +912,18 @@ void DrawingArea::keyPressEvent(QKeyEvent *event)
         QWidget::keyPressEvent(event);
         return;
     }
-    
+
     // 处理撤销和重做快捷键
-    if (event->modifiers() & Qt::ControlModifier) {
-        if (event->key() == Qt::Key_Z) {
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        if (event->key() == Qt::Key_Z)
+        {
             undo();
             event->accept();
             return;
-        } else if (event->key() == Qt::Key_Y) {
+        }
+        else if (event->key() == Qt::Key_Y)
+        {
             redo();
             event->accept();
             return;
@@ -923,7 +935,7 @@ void DrawingArea::keyPressEvent(QKeyEvent *event)
     {
         // 记录删除操作到历史
         recordRemoveShape(selectedIndex);
-        
+
         // 删除相关的箭头连接
         arrowConnections.erase(
             std::remove_if(arrowConnections.begin(), arrowConnections.end(),
@@ -941,7 +953,7 @@ void DrawingArea::keyPressEvent(QKeyEvent *event)
         event->accept();
         return;
     }
-    
+
     QWidget::keyPressEvent(event);
 }
 
@@ -991,14 +1003,14 @@ void DrawingArea::dropEvent(QDropEvent *event)
         {
             // 记录最初的索引
             int newIndex = shapes.size();
-            
+
             // 添加到图形列表
             shapes.push_back(std::move(shape));
             selectedIndex = shapes.size() - 1;
-            
+
             // 记录添加图形到历史
             recordAddShape(selectedIndex);
-            
+
             update();
         }
         event->acceptProposedAction();
@@ -1012,7 +1024,7 @@ void DrawingArea::updateConnectedArrows(int shapeIndex, const QPoint &delta)
 
     // 获取当前图形的所有箭头锚点的最新位置
     const auto &arrowAnchors = shapes[shapeIndex]->getArrowAnchors();
-    
+
     // 遍历所有箭头连接
     for (auto it = arrowConnections.begin(); it != arrowConnections.end(); ++it)
     {
@@ -1024,22 +1036,111 @@ void DrawingArea::updateConnectedArrows(int shapeIndex, const QPoint &delta)
             if (conn.arrowIndex >= 0 && conn.arrowIndex < shapes.size())
             {
                 // 检查是否是箭头类型
-                auto *arrow = dynamic_cast<ShapeArrow*>(shapes[conn.arrowIndex].get());
+                auto *arrow = dynamic_cast<ShapeArrow *>(shapes[conn.arrowIndex].get());
                 if (arrow)
                 {
                     // 更新箭头连接点位置
-                    if (conn.handleIndex >= 0 && conn.handleIndex < arrowAnchors.size()) {
+                    if (conn.handleIndex >= 0 && conn.handleIndex < arrowAnchors.size())
+                    {
                         // 使用图形上的锚点的实时位置，而不仅仅是添加delta
                         QPoint anchorPos = arrowAnchors[conn.handleIndex].rect.center();
-                        if (conn.isStartPoint) {
+                        if (conn.isStartPoint)
+                        {
                             arrow->setP1(anchorPos);
-                        } else {
+                        }
+                        else
+                        {
                             arrow->setP2(anchorPos);
                         }
-                    } else {
+                    }
+                    else
+                    {
                         // 如果找不到锚点，就使用delta进行相对移动
                         arrow->updateConnection(conn.isStartPoint, delta);
                     }
+                }
+            }
+        }
+        // 处理该图形就是箭头自身的情况
+        if (conn.arrowIndex == shapeIndex)
+        {
+            continue; // 箭头自身移动不需要处理
+        }
+    }
+
+    // 第二遍检查：查找未记录的连接
+    for (size_t i = 0; i < shapes.size(); ++i)
+    {
+        auto *arrow = dynamic_cast<ShapeArrow *>(shapes[i].get());
+        if (!arrow || i == shapeIndex)
+            continue;
+
+        // 获取箭头的端点
+        QPoint p1 = arrow->getLine().p1();
+        QPoint p2 = arrow->getLine().p2();
+
+        // 获取当前移动图形的箭头锚点
+        const auto &anchors = shapes[shapeIndex]->getArrowAnchors();
+        const int snapDistance = 5;
+
+        // 检查是否已有连接记录
+        bool startPointConnected = false;
+        bool endPointConnected = false;
+
+        for (const auto &conn : arrowConnections)
+        {
+            if (conn.arrowIndex == i && conn.shapeIndex == shapeIndex)
+            {
+                if (conn.isStartPoint)
+                    startPointConnected = true;
+                else
+                    endPointConnected = true;
+
+                // 更新已有连接的位置
+                QPoint newAnchorPos = anchors[conn.handleIndex].rect.center();
+                if (conn.isStartPoint)
+                    arrow->setP1(newAnchorPos);
+                else
+                    arrow->setP2(newAnchorPos);
+            }
+        }
+
+        // 检查未记录的起点连接
+        if (!startPointConnected)
+        {
+            for (size_t j = 0; j < anchors.size(); ++j)
+            {
+                QPoint anchorPos = anchors[j].rect.center();
+                if ((p1 - anchorPos).manhattanLength() <= snapDistance)
+                {
+                    ArrowConnection newConn;
+                    newConn.arrowIndex = i;
+                    newConn.shapeIndex = shapeIndex;
+                    newConn.handleIndex = j;
+                    newConn.isStartPoint = true;
+                    arrowConnections.push_back(newConn);
+                    arrow->setP1(anchorPos);
+                    break;
+                }
+            }
+        }
+
+        // 检查未记录的终点连接
+        if (!endPointConnected)
+        {
+            for (size_t j = 0; j < anchors.size(); ++j)
+            {
+                QPoint anchorPos = anchors[j].rect.center();
+                if ((p2 - anchorPos).manhattanLength() <= snapDistance)
+                {
+                    ArrowConnection newConn;
+                    newConn.arrowIndex = i;
+                    newConn.shapeIndex = shapeIndex;
+                    newConn.handleIndex = j;
+                    newConn.isStartPoint = false;
+                    arrowConnections.push_back(newConn);
+                    arrow->setP2(anchorPos);
+                    break;
                 }
             }
         }
@@ -1129,10 +1230,10 @@ void DrawingArea::pasteShape()
         int newIndex = shapes.size();
         shapes.push_back(std::move(newShape));
         selectedIndex = shapes.size() - 1;
-        
+
         // 记录添加操作
         recordAddShape(selectedIndex);
-        
+
         update();
     }
 }
@@ -1143,7 +1244,7 @@ void DrawingArea::deleteSelectedShape()
     {
         // 记录删除操作到历史
         recordRemoveShape(selectedIndex);
-        
+
         // 删除相关的箭头连接
         auto it = std::remove_if(arrowConnections.begin(), arrowConnections.end(),
                                  [this](const ArrowConnection &conn)
@@ -1222,14 +1323,14 @@ void DrawingArea::setSelectedShapeLineColor(const QColor &color)
     {
         QColor oldColor = shapes[selectedIndex]->getLineColor();
         int oldWidth = shapes[selectedIndex]->getLineWidth();
-        
+
         // 如果颜色没有变化，不需要记录
         if (oldColor == color)
             return;
-            
+
         // 记录属性变更
         recordPropertyChange(selectedIndex, oldColor, color, oldWidth, oldWidth);
-        
+
         shapes[selectedIndex]->setLineColor(color);
         update();
     }
@@ -1241,14 +1342,14 @@ void DrawingArea::setSelectedShapeLineWidth(int width)
     {
         QColor oldColor = shapes[selectedIndex]->getLineColor();
         int oldWidth = shapes[selectedIndex]->getLineWidth();
-        
+
         // 如果宽度没有变化，不需要记录
         if (oldWidth == width)
             return;
-            
+
         // 记录属性变更
         recordPropertyChange(selectedIndex, oldColor, oldColor, oldWidth, width);
-        
+
         shapes[selectedIndex]->setLineWidth(width);
         update();
     }
@@ -1394,21 +1495,26 @@ void DrawingArea::undo()
     m_undoStack.pop();
 
     // 根据操作类型执行相反的操作
-    switch (action.type) {
+    switch (action.type)
+    {
     case OperationType::Add:
         // 添加操作的撤销：删除图形
-        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size()) {
+        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size())
+        {
             // 保存到重做栈中，确保shape所有权正确转移
             HistoryAction redoAction(OperationType::Add, action.shapeIndex);
             redoAction.shape = shapes[action.shapeIndex]->clone();
             m_redoStack.push(std::move(redoAction));
-            
+
             // 执行删除
             shapes.erase(shapes.begin() + action.shapeIndex);
-            if (selectedIndex == action.shapeIndex) {
+            if (selectedIndex == action.shapeIndex)
+            {
                 selectedIndex = -1;
                 emit selectionCleared();
-            } else if (selectedIndex > action.shapeIndex) {
+            }
+            else if (selectedIndex > action.shapeIndex)
+            {
                 selectedIndex--;
             }
             update();
@@ -1417,30 +1523,34 @@ void DrawingArea::undo()
 
     case OperationType::Remove:
         // 删除操作的撤销：重新添加图形
-        if (action.shape) {
+        if (action.shape)
+        {
             // 确保action.shape不为nullptr后再进行操作
             HistoryAction redoAction(OperationType::Remove, action.shapeIndex);
-            redoAction.shape = action.shape->clone();  // 创建副本，避免所有权转移问题
-            
+            redoAction.shape = action.shape->clone(); // 创建副本，避免所有权转移问题
+
             // 记录连接关系
-            for (const auto& conn : action.connections) {
+            for (const auto &conn : action.connections)
+            {
                 redoAction.connections.push_back(conn);
             }
-            
+
             // 保存到重做栈
             m_redoStack.push(std::move(redoAction));
-            
+
             // 恢复箭头连接关系
-            for (const auto& conn : action.connections) {
+            for (const auto &conn : action.connections)
+            {
                 arrowConnections.push_back(conn);
             }
 
             // 在原来的位置插入图形
             int insertIndex = std::min(action.shapeIndex, (int)shapes.size());
             shapes.insert(shapes.begin() + insertIndex, std::move(action.shape));
-            
+
             // 更新选择索引
-            if (selectedIndex >= insertIndex) {
+            if (selectedIndex >= insertIndex)
+            {
                 selectedIndex++;
             }
             update();
@@ -1449,18 +1559,19 @@ void DrawingArea::undo()
 
     case OperationType::Move:
         // 移动操作的撤销：移回原位置
-        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size()) {
+        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size())
+        {
             // 创建重做动作
             HistoryAction redoAction(OperationType::Move, action.shapeIndex);
             redoAction.moveDelta = action.moveDelta;
-            
+
             // 保存到重做栈
             m_redoStack.push(std::move(redoAction));
-            
+
             // 执行反向移动
             QPoint delta = -action.moveDelta; // 反向移动
             shapes[action.shapeIndex]->moveBy(delta);
-            
+
             // 更新连接的箭头位置
             updateConnectedArrows(action.shapeIndex, delta);
             update();
@@ -1469,10 +1580,11 @@ void DrawingArea::undo()
 
     case OperationType::Resize:
         // 调整尺寸操作的撤销：恢复原来的尺寸
-        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size()) {
+        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size())
+        {
             // 保存到重做栈
             m_redoStack.push(std::move(action));
-            
+
             // 恢复原来的尺寸
             shapes[action.shapeIndex]->setRect(action.oldRect);
             update();
@@ -1481,10 +1593,11 @@ void DrawingArea::undo()
 
     case OperationType::Property:
         // 属性更改操作的撤销：恢复原来的属性
-        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size()) {
+        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size())
+        {
             // 保存到重做栈
             m_redoStack.push(std::move(action));
-            
+
             // 恢复原来的线条颜色和粗细
             shapes[action.shapeIndex]->setLineColor(action.oldLineColor);
             shapes[action.shapeIndex]->setLineWidth(action.oldLineWidth);
@@ -1517,21 +1630,24 @@ void DrawingArea::redo()
     m_redoStack.pop();
 
     // 根据操作类型执行相应的操作
-    switch (action.type) {
+    switch (action.type)
+    {
     case OperationType::Add:
         // 添加操作的重做：重新添加图形
-        if (action.shape) {
+        if (action.shape)
+        {
             // 确保有一个副本可供撤销操作使用
             HistoryAction undoAction(OperationType::Add, action.shapeIndex);
             undoAction.shape = action.shape->clone();
             m_undoStack.push(std::move(undoAction));
-            
+
             // 在原来的位置插入图形
             int insertIndex = std::min(action.shapeIndex, (int)shapes.size());
             shapes.insert(shapes.begin() + insertIndex, std::move(action.shape));
-            
+
             // 更新选择索引
-            if (selectedIndex >= insertIndex) {
+            if (selectedIndex >= insertIndex)
+            {
                 selectedIndex++;
             }
             update();
@@ -1540,16 +1656,20 @@ void DrawingArea::redo()
 
     case OperationType::Remove:
         // 删除操作的重做：再次删除图形
-        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size()) {
+        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size())
+        {
             // 保存到撤销栈
             m_undoStack.push(std::move(action));
-            
+
             // 执行删除
             shapes.erase(shapes.begin() + action.shapeIndex);
-            if (selectedIndex == action.shapeIndex) {
+            if (selectedIndex == action.shapeIndex)
+            {
                 selectedIndex = -1;
                 emit selectionCleared();
-            } else if (selectedIndex > action.shapeIndex) {
+            }
+            else if (selectedIndex > action.shapeIndex)
+            {
                 selectedIndex--;
             }
             update();
@@ -1558,13 +1678,14 @@ void DrawingArea::redo()
 
     case OperationType::Move:
         // 移动操作的重做：重新移动
-        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size()) {
+        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size())
+        {
             // 保存到撤销栈
             m_undoStack.push(std::move(action));
-            
+
             // 执行移动
             shapes[action.shapeIndex]->moveBy(action.moveDelta);
-            
+
             // 更新连接的箭头位置
             updateConnectedArrows(action.shapeIndex, action.moveDelta);
             update();
@@ -1573,10 +1694,11 @@ void DrawingArea::redo()
 
     case OperationType::Resize:
         // 调整尺寸操作的重做：再次调整尺寸
-        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size()) {
+        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size())
+        {
             // 保存到撤销栈
             m_undoStack.push(std::move(action));
-            
+
             // 设置新的尺寸
             shapes[action.shapeIndex]->setRect(action.newRect);
             update();
@@ -1585,10 +1707,11 @@ void DrawingArea::redo()
 
     case OperationType::Property:
         // 属性更改操作的重做：再次更改属性
-        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size()) {
+        if (action.shapeIndex >= 0 && action.shapeIndex < shapes.size())
+        {
             // 保存到撤销栈
             m_undoStack.push(std::move(action));
-            
+
             // 设置新的线条颜色和粗细
             shapes[action.shapeIndex]->setLineColor(action.newLineColor);
             shapes[action.shapeIndex]->setLineWidth(action.newLineWidth);
@@ -1611,21 +1734,21 @@ void DrawingArea::recordAddShape(int index)
     if (m_ignoreHistoryActions)
         return;
 
-    if (index < 0 || index >= shapes.size()) {
+    if (index < 0 || index >= shapes.size())
+    {
         return;
     }
-    
+
     HistoryAction action(OperationType::Add, index);
-    
+
     // 为添加操作保存图形的副本，确保正确克隆
     action.shape = shapes[index]->clone();
 
     m_undoStack.push(std::move(action));
     clearRedoStack();
-    
+
     emit canUndoChanged(canUndo());
     emit canRedoChanged(canRedo());
-
 }
 
 // 记录删除图形操作
@@ -1635,20 +1758,22 @@ void DrawingArea::recordRemoveShape(int index)
         return;
 
     HistoryAction action(OperationType::Remove, index);
-    
+
     // 克隆当前图形
     action.shape = shapes[index]->clone();
-    
+
     // 记录和该图形相关的箭头连接
-    for (const auto& conn : arrowConnections) {
-        if (conn.shapeIndex == index) {
+    for (const auto &conn : arrowConnections)
+    {
+        if (conn.shapeIndex == index)
+        {
             action.connections.push_back(conn);
         }
     }
-    
+
     m_undoStack.push(std::move(action));
     clearRedoStack();
-    
+
     emit canUndoChanged(canUndo());
     emit canRedoChanged(canRedo());
 }
@@ -1661,10 +1786,10 @@ void DrawingArea::recordMoveShape(int index, const QPoint &delta)
 
     HistoryAction action(OperationType::Move, index);
     action.moveDelta = delta;
-    
+
     m_undoStack.push(std::move(action));
     clearRedoStack();
-    
+
     emit canUndoChanged(canUndo());
     emit canRedoChanged(canRedo());
 }
@@ -1678,17 +1803,17 @@ void DrawingArea::recordResizeShape(int index, const QRect &oldRect, const QRect
     HistoryAction action(OperationType::Resize, index);
     action.oldRect = oldRect;
     action.newRect = newRect;
-    
+
     m_undoStack.push(std::move(action));
     clearRedoStack();
-    
+
     emit canUndoChanged(canUndo());
     emit canRedoChanged(canRedo());
 }
 
 // 记录图形属性变更操作
-void DrawingArea::recordPropertyChange(int index, const QColor &oldColor, const QColor &newColor, 
-                                     int oldWidth, int newWidth)
+void DrawingArea::recordPropertyChange(int index, const QColor &oldColor, const QColor &newColor,
+                                       int oldWidth, int newWidth)
 {
     if (m_ignoreHistoryActions || index < 0 || index >= shapes.size())
         return;
@@ -1698,10 +1823,10 @@ void DrawingArea::recordPropertyChange(int index, const QColor &oldColor, const 
     action.newLineColor = newColor;
     action.oldLineWidth = oldWidth;
     action.newLineWidth = newWidth;
-    
+
     m_undoStack.push(std::move(action));
     clearRedoStack();
-    
+
     emit canUndoChanged(canUndo());
     emit canRedoChanged(canRedo());
 }
@@ -1709,7 +1834,8 @@ void DrawingArea::recordPropertyChange(int index, const QColor &oldColor, const 
 // 清空重做堆栈
 void DrawingArea::clearRedoStack()
 {
-    while (!m_redoStack.empty()) {
+    while (!m_redoStack.empty())
+    {
         m_redoStack.pop();
     }
     emit canRedoChanged(false);
