@@ -2,5 +2,10 @@
 <qresource prefix="/">
 <file>image/peiqi.png</file>
 <file>image/hexArrow.png</file>
+<file>image/swap.png</file>
+<file>image/vflip.png</file>
+<file>image/hflip.png</file>
+<file>image/rotate_left.png</file>
+<file>image/rotate_right.png</file>
 </qresource>
 </RCC>

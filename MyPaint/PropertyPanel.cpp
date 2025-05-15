@@ -6,6 +6,7 @@
 #include "ShapePolygon.h"
 #include <QScrollArea>
 #include <QLabel>
+#include <QIcon>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -116,7 +117,7 @@ void PropertyPanel::setupPageStyleTab()
 
     // 添加交换按钮
     QToolButton *swapDimensionsButton = new QToolButton();
-    swapDimensionsButton->setText("⇄");
+    swapDimensionsButton->setIcon(QIcon(":/image/swap.png"));
     swapDimensionsButton->setToolTip(tr("Swap Width/Height"));
 
     m_pageSizeHeightSpinBox = new QSpinBox();
@@ -219,25 +220,25 @@ void PropertyPanel::setupShapeStyleTab()
     layoutGroupLayout->addWidget(new QLabel(tr("Angle:")), 2, 0);
     m_rotationSpinBox = new QDoubleSpinBox();
     m_rotationSpinBox->setRange(0, 360);
-    m_rotationSpinBox->setSuffix("°");
+    m_rotationSpinBox->setSuffix("deg");
     layoutGroupLayout->addWidget(m_rotationSpinBox, 2, 1);
 
     // 添加旋转按钮
     QHBoxLayout *rotationBtnsLayout = new QHBoxLayout();
     m_rotateLeftBtn = new QToolButton();
-    m_rotateLeftBtn->setText("←");
+    m_rotateLeftBtn->setIcon(QIcon(":/image/rotate_left.png"));
     m_rotateLeftBtn->setToolTip(tr("Rotate Left"));
 
     m_vFlipButton = new QToolButton();
-    m_vFlipButton->setText("↕");
+    m_vFlipButton->setIcon(QIcon(":/image/vflip.png"));
     m_vFlipButton->setToolTip(tr("Vertical Flip (Set angle to 0)"));
 
     m_hFlipButton = new QToolButton();
-    m_hFlipButton->setText("↔");
+    m_hFlipButton->setIcon(QIcon(":/image/hflip.png"));
     m_hFlipButton->setToolTip(tr("Horizontal Flip (Set angle to 90)"));
 
     m_rotateRightBtn = new QToolButton();
-    m_rotateRightBtn->setText("→");
+    m_rotateRightBtn->setIcon(QIcon(":/image/rotate_right.png"));
     m_rotateRightBtn->setToolTip(tr("Rotate Right"));
 
     rotationBtnsLayout->addWidget(m_rotateLeftBtn);
